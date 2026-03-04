@@ -142,6 +142,24 @@ const ndLocalFontDefinitions = [
   { id: 'nd-zh-sourcehan-serif-bold', name: '思源宋体-Bold', family: 'SourceHanSerifCN_Bold', category: 'zh', fallback: 'serif' },
   { id: 'nd-zh-canger-yuyang', name: '仓耳渔阳体W03', family: 'CangErYuYangTiW03', category: 'zh' },
   { id: 'nd-zh-huiwen-mingchao', name: '汇文明朝体', family: 'Huiwen_mingchao', category: 'zh', fallback: 'serif' },
+  { id: 'nd-en-quicksand', name: 'Quicksand', family: 'en-quicksand', category: 'en' },
+  { id: 'nd-en-robotoslab', name: 'Roboto Slab', family: 'en-robotoslab', category: 'en', fallback: 'serif' },
+  { id: 'nd-en-urbanist', name: 'Urbanist', family: 'en-urbanist', category: 'en' },
+  { id: 'nd-en-urbanist-italic', name: 'Urbanist Italic', family: 'en-urbanist-italic', category: 'en' },
+  { id: 'nd-hand-hcszt', name: 'HCSZT 手写体', family: 'hand-hcszt', category: 'zh' },
+  { id: 'nd-hand-long-cang', name: '龙藏手写体', family: 'hand-long-cang', category: 'zh' },
+  { id: 'nd-hand-new-leaf', name: '新叶手写体', family: 'hand-new-leaf', category: 'zh' },
+  { id: 'nd-hand-qiantuxianmoti', name: '前途鲜墨体', family: 'hand-qiantuxianmoti', category: 'zh' },
+  { id: 'nd-hand-such-as', name: '如是手写体', family: 'hand-such-as', category: 'zh' },
+  { id: 'nd-zh-chill-dot-matrix', name: 'Chill 点阵体', family: 'zh-chill-dot-matrix', category: 'zh' },
+  { id: 'nd-zh-dingtalk-jinbuti', name: '钉钉进步体', family: 'zh-dingtalk-jinbuti', category: 'zh' },
+  { id: 'nd-zh-douyin-sans-bold', name: '抖音 Sans Bold', family: 'zh-douyin-sans-bold', category: 'zh' },
+  { id: 'nd-zh-toneoz-wenkai-medium', name: 'ToneOZ 文楷 Medium', family: 'zh-toneoz-wenkai-medium', category: 'zh' },
+  { id: 'nd-zh-toneoz-wenkai-regular', name: 'ToneOZ 文楷 Regular', family: 'zh-toneoz-wenkai-regular', category: 'zh' },
+  { id: 'nd-zh-torono-kugel-serif', name: 'Torono Kugel Serif', family: 'zh-torono-kugel-serif', category: 'zh', fallback: 'serif' },
+  { id: 'nd-zh-xiangcui-typewriter', name: '香萃打字机体', family: 'zh-xiangcui-typewriter', category: 'zh' },
+  { id: 'nd-zh-xiangcui-zerohei', name: '香萃零黑体', family: 'zh-xiangcui-zerohei', category: 'zh' },
+  { id: 'nd-zh-zhuque-fangsong', name: '朱雀仿宋', family: 'zh-zhuque-fangsong', category: 'zh', fallback: 'serif' },
 ]
 
 const ndLocalFontOptions = ndLocalFontDefinitions.map((item) => ({
@@ -226,7 +244,7 @@ const fontFamilyConfig = reactive({
 
 const fontSizeConfig = reactive({
   icon: 28,
-  title: 34,
+  title: 32,
   body: 24,
   author: 16,
   time: 15,
@@ -1013,7 +1031,7 @@ function resetAll() {
   fontFamilyConfig.watermark = 'sans'
 
   fontSizeConfig.icon = 28
-  fontSizeConfig.title = 34
+  fontSizeConfig.title = 32
   fontSizeConfig.body = 24
   fontSizeConfig.author = 16
   fontSizeConfig.time = 15
@@ -1053,11 +1071,18 @@ function getTimeStamp() {
   return `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`
 }
 
+function shouldIgnoreExportElement(element) {
+  if (!element) return false
+  if (element.classList?.contains('card-download-side-btn')) return true
+  return element.getAttribute?.('data-export-ignore') === 'true'
+}
+
 async function downloadCardNode(node, filename) {
   const canvas = await html2canvas(node, {
     scale: 2,
     useCORS: true,
     backgroundColor: null,
+    ignoreElements: shouldIgnoreExportElement,
   })
   const link = document.createElement('a')
   link.download = filename
@@ -1070,6 +1095,7 @@ async function renderCardBlob(node) {
     scale: 2,
     useCORS: true,
     backgroundColor: null,
+    ignoreElements: shouldIgnoreExportElement,
   })
   return new Promise((resolve, reject) => {
     canvas.toBlob((blob) => {
@@ -1519,48 +1545,52 @@ async function downloadAllPages() {
         </label>
         <button class="btn primary mini" type="button" :disabled="isExporting || totalPages < 1" @click="downloadAllPages">
           <span class="download-icon">⬇</span>
-          {{ isExporting ? '下载中...' : bulkDownloadMode === 'zip' ? '下载 ZIP' : '逐张下载全部页' }}
+          {{ isExporting ? '下载中...' : '下载全部' }}
         </button>
       </div>
 
       <div ref="previewFrameRef" class="preview-frame">
         <div class="preview-stack">
           <section v-for="(_, index) in pagedContents" :key="`page-${index}`" class="page-panel">
-            <article
-              class="card preview-card"
-              :class="`card--${templateId}`"
-              :style="[cardStyle, { width: `${previewCardWidth}px` }]"
-            >
+            <div class="preview-card-shell">
+              <article
+                class="card preview-card"
+                :class="`card--${templateId}`"
+                :style="[cardStyle, { width: `${previewCardWidth}px` }]"
+              >
+                <span v-if="display.watermark" class="card-watermark" :style="fontStyle.watermark">
+                  {{ cardData.watermark || 'WATERMARK' }}
+                </span>
+
+                <header class="card-head">
+                  <div class="head-left">
+                    <span v-if="display.icon" class="card-icon" :style="fontStyle.icon">
+                      {{ cardData.icon || '✦' }}
+                    </span>
+                    <h2 v-if="display.title" class="card-title" :style="fontStyle.title" v-html="renderedTitleHtml"></h2>
+                  </div>
+                  <span v-if="display.page" class="card-page" :style="fontStyle.page">{{ pageText(index) }}</span>
+                </header>
+
+                <div class="card-content" :style="fontStyle.body" v-html="pagedContentHtml[index]"></div>
+
+                <footer class="card-meta">
+                  <span v-if="display.author" class="meta-item" :style="fontStyle.author">{{ cardData.author || '@author' }}</span>
+                  <span v-if="display.time" class="meta-item" :style="fontStyle.time">{{ cardData.time || formatNow() }}</span>
+                </footer>
+              </article>
               <button
-                class="icon-btn card-download-btn"
+                class="icon-btn card-download-side-btn"
                 type="button"
                 :disabled="isExporting"
                 :title="`下载第 ${index + 1} 页`"
+                :aria-label="`下载第 ${index + 1} 页`"
+                data-export-ignore="true"
                 @click="downloadSinglePage(index)"
               >
                 <span class="download-icon">⬇</span>
               </button>
-              <span v-if="display.watermark" class="card-watermark" :style="fontStyle.watermark">
-                {{ cardData.watermark || 'WATERMARK' }}
-              </span>
-
-              <header class="card-head">
-                <div class="head-left">
-                  <span v-if="display.icon" class="card-icon" :style="fontStyle.icon">
-                    {{ cardData.icon || '✦' }}
-                  </span>
-                  <h2 v-if="display.title" class="card-title" :style="fontStyle.title" v-html="renderedTitleHtml"></h2>
-                </div>
-                <span v-if="display.page" class="card-page" :style="fontStyle.page">{{ pageText(index) }}</span>
-              </header>
-
-              <div class="card-content" :style="fontStyle.body" v-html="pagedContentHtml[index]"></div>
-
-              <footer class="card-meta">
-                <span v-if="display.author" class="meta-item" :style="fontStyle.author">{{ cardData.author || '@author' }}</span>
-                <span v-if="display.time" class="meta-item" :style="fontStyle.time">{{ cardData.time || formatNow() }}</span>
-              </footer>
-            </article>
+            </div>
           </section>
         </div>
       </div>

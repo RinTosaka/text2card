@@ -22,20 +22,3 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-
-# Font whitelist (other built-in fonts stay local only)
-public/fonts/built-in/*
-!public/fonts/built-in/zh-alibaba-puhui/
-!public/fonts/built-in/zh-alibaba-puhui/**
-!public/fonts/built-in/zh-misans/
-!public/fonts/built-in/zh-misans/**
-!public/fonts/built-in/zh-lxgw-wenkai-light/
-!public/fonts/built-in/zh-lxgw-wenkai-light/**
-!public/fonts/built-in/zh-sourcehan-serif-semibold/
-!public/fonts/built-in/zh-sourcehan-serif-semibold/**
-!public/fonts/built-in/zh-sourcehan-serif-bold/
-!public/fonts/built-in/zh-sourcehan-serif-bold/**
-!public/fonts/built-in/zh-canger-yuyang/
-!public/fonts/built-in/zh-canger-yuyang/**
-!public/fonts/built-in/zh-huiwen-mingchao/
-!public/fonts/built-in/zh-huiwen-mingchao/**
