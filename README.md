@@ -17,6 +17,38 @@
 - 标题/正文 Markdown 渲染
 - 单字样式语法：可对局部文字设置颜色、字号、字重等
 
+## 展示区
+
+### 1. 编辑器与实时预览
+
+<img src="./docs/showcase/preview.png" alt="editor-preview" style="zoom:100%;" />
+
+### 2. 预设模板
+**正方形 1：1**
+<img src="./docs/showcase/正方形 1：1.png" alt="正方形 1：1" style="zoom:20%;" />
+**小红书 3：4**
+<img src="./docs/showcase/小红书 3：4.png" alt="小红书 3：4" style="zoom:20%;" />
+**Pintersti 7：5**
+<img src="./docs/showcase/Pintersti 7：5.png" alt="Pintersti 7：5" style="zoom:20%;" />
+**Youtube 16：9**
+<img src="./docs/showcase/Youtube 16：9.png" alt="Youtube 16：9" style="zoom:20%;" />
+
+### 3. 主题
+**晨光**
+<img src="./docs/showcase/晨光.png" alt="晨光" style="zoom:20%;" />
+**山林**
+<img src="./docs/showcase/山林.png" alt="山林" style="zoom:20%;" />
+**墨夜**
+<img src="./docs/showcase/墨夜.png" alt="墨夜" style="zoom:20%;" />
+**海盐**
+<img src="./docs/showcase/海盐.png" alt="海盐" style="zoom:20%;" />
+
+### 4. 分页展示
+**p1**
+<img src="./docs/showcase/p1.png" alt="p1" style="zoom:20%;" />
+**p2**
+<img src="./docs/showcase/p2.png" alt="p2" style="zoom:20%;" />
+
 ## 技术栈
 
 - `Vue 3`

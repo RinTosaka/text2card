@@ -83,20 +83,39 @@ body {
 
 .panel-github {
     flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     margin-top: 1px;
-    height: 30px;
-    padding: 0 10px;
+    width: 32px;
+    height: 32px;
+    padding: 0;
     border: 1px solid #c5d3df;
-    border-radius: 999px;
+    border-radius: 10px;
     background: #f4f8fc;
     color: #37526a;
-    font-size: 12px;
-    line-height: 1;
+    text-decoration: none;
+    transition:
+        border-color 0.2s,
+        background-color 0.2s,
+        color 0.2s;
 }
 
-.panel-github:disabled {
-    opacity: 0.82;
-    cursor: not-allowed;
+.panel-github svg {
+    width: 18px;
+    height: 18px;
+    display: block;
+}
+
+.panel-github:hover {
+    border-color: #9eb5c8;
+    background: #ecf4fb;
+    color: #244760;
+}
+
+.panel-github:focus-visible {
+    outline: 2px solid #74a4cc;
+    outline-offset: 1px;
 }
 
 .section-block {
@@ -791,10 +810,6 @@ input[type="checkbox"] {
 @media (max-width: 640px) {
     .panel-head {
         flex-wrap: wrap;
-    }
-
-    .panel-github {
-        width: 100%;
     }
 
     .grid-fields,
