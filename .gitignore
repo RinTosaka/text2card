@@ -1,0 +1,41 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Font whitelist (other built-in fonts stay local only)
+public/fonts/built-in/*
+!public/fonts/built-in/zh-alibaba-puhui/
+!public/fonts/built-in/zh-alibaba-puhui/**
+!public/fonts/built-in/zh-misans/
+!public/fonts/built-in/zh-misans/**
+!public/fonts/built-in/zh-lxgw-wenkai-light/
+!public/fonts/built-in/zh-lxgw-wenkai-light/**
+!public/fonts/built-in/zh-sourcehan-serif-semibold/
+!public/fonts/built-in/zh-sourcehan-serif-semibold/**
+!public/fonts/built-in/zh-sourcehan-serif-bold/
+!public/fonts/built-in/zh-sourcehan-serif-bold/**
+!public/fonts/built-in/zh-canger-yuyang/
+!public/fonts/built-in/zh-canger-yuyang/**
+!public/fonts/built-in/zh-huiwen-mingchao/
+!public/fonts/built-in/zh-huiwen-mingchao/**
