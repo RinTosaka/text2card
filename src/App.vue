@@ -178,7 +178,8 @@ const fontCategoryOptions = [
 
 const fontTargetOptions = [
   { key: 'icon', label: '图标' },
-  { key: 'title', label: '标题' },
+  { key: 'headerLeft', label: '页眉左' },
+  { key: 'headerRight', label: '页眉右' },
   { key: 'body', label: '正文' },
   { key: 'author', label: '署名' },
   { key: 'time', label: '时间' },
@@ -186,7 +187,7 @@ const fontTargetOptions = [
   { key: 'watermark', label: '水印' },
 ]
 
-const iconQuickPick = ['✦', '✿', '☕', '📌', '📝', '💡', '🚀', '🤖']
+const iconQuickPick = ['✦', '■', '✿', '☕', '📌', '📝', '💡', '🚀', '🤖']
 
 const CONFIG_FILE_VERSION = 1
 
@@ -194,6 +195,7 @@ const previewFrameRef = ref(null)
 const measureContentRef = ref(null)
 const contentTextareaRef = ref(null)
 const configFileInputRef = ref(null)
+const coverCardRef = ref(null)
 
 const isExporting = ref(false)
 const previewCardWidth = ref(700)
@@ -202,6 +204,8 @@ const bulkDownloadMode = ref('zip')
 const selectedFontCategory = ref('all')
 const uploadedFontOptions = ref([])
 const uploadedFontObjectUrls = ref([])
+
+const panelTab = ref('common')
 
 const sizePresetId = ref('xhs')
 const sizeControl = reactive({ width: 1080, height: 1080 })
@@ -212,7 +216,7 @@ const templateId = ref('clean')
 
 const display = reactive({
   icon: true,
-  title: true,
+  headerLeft: true,
   author: true,
   time: true,
   page: true,
@@ -221,11 +225,55 @@ const display = reactive({
 
 const cardData = reactive({
   icon: '✦',
-  title: '文字卡片标题',
+  headerLeft: '经典句子摘抄',
+  headerRight: 'Classic Quote Extraction',
   content: '在左侧输入文案，快速生成用于分享的卡片内容。',
   author: '@Text2Card',
   time: formatNow(),
   watermark: 'TEXT2CARD',
+})
+
+const coverData = reactive({
+  title: '《我与地坛》',
+  author: '作者：史铁生',
+  subtitle: '经典句子摘抄',
+  quote: '在满园弥漫的沉静光芒中，一个人更容易看到时间，并看见自己的身影。',
+})
+
+const coverFontFamilyConfig = reactive({
+  title: 'nd-zh-huiwen-mingchao',
+  author: 'nd-zh-huiwen-mingchao',
+  subtitle: 'nd-zh-huiwen-mingchao',
+  quote: 'nd-zh-huiwen-mingchao',
+})
+
+const coverFontSizeConfig = reactive({
+  title: 55,
+  author: 30,
+  subtitle: 27,
+  quote: 27,
+})
+
+const coverOffsets = reactive({
+  title: { x: 0, y: 0 },
+  author: { x: 0, y: 0 },
+  subtitle: { x: 0, y: 0 },
+  quote: { x: 0, y: 0 },
+})
+
+const coverDisplay = reactive({
+  title: true,
+  author: true,
+  subtitle: true,
+  quote: true,
+})
+
+const activeCoverDragKey = ref('')
+const coverDragState = reactive({
+  startX: 0,
+  startY: 0,
+  originX: 0,
+  originY: 0,
 })
 
 const typography = reactive({
@@ -235,9 +283,15 @@ const typography = reactive({
   radius: 28,
 })
 
+const headerLineStyle = reactive({
+  type: 'solid',
+  thickness: 1,
+})
+
 const fontFamilyConfig = reactive({
   icon: 'sans',
-  title: 'serif',
+  headerLeft: 'serif',
+  headerRight: 'nd-zh-alibaba-puhui',
   body: 'serif',
   author: 'sans',
   time: 'sans',
@@ -247,7 +301,8 @@ const fontFamilyConfig = reactive({
 
 const fontSizeConfig = reactive({
   icon: 28,
-  title: 32,
+  headerLeft: 20,
+  headerRight: 16,
   body: 24,
   author: 16,
   time: 15,
@@ -310,8 +365,10 @@ const filteredFontOptions = computed(() => {
   }
   return allFontOptions.value.filter((item) => item.category === selectedFontCategory.value)
 })
-const renderedTitleHtml = computed(() => renderMarkdownInline(cardData.title, '未命名标题'))
+const renderedHeaderLeftHtml = computed(() => renderMarkdownInline(cardData.headerLeft, '未命名标题'))
+const renderedHeaderRightHtml = computed(() => renderMarkdownInline(cardData.headerRight, ''))
 const pagedContentHtml = computed(() => pagedContents.value.map((content) => renderMarkdownBody(content, '请在左侧输入正文内容。')))
+const previewMode = computed(() => (panelTab.value === 'cover' ? 'cover' : 'content'))
 
 const normalizedPlainText = computed(() => normalizeBreakMarks(cardData.content).replace(/\f/g, ''))
 const charCount = computed(() => normalizedPlainText.value.replace(/\s/g, '').length)
@@ -359,9 +416,13 @@ const fontStyle = computed(() => ({
     fontFamily: getFontValue(fontFamilyConfig.icon),
     fontSize: `${fontSizeConfig.icon}px`,
   },
-  title: {
-    fontFamily: getFontValue(fontFamilyConfig.title),
-    fontSize: `${fontSizeConfig.title}px`,
+  headerLeft: {
+    fontFamily: getFontValue(fontFamilyConfig.headerLeft),
+    fontSize: `${fontSizeConfig.headerLeft}px`,
+  },
+  headerRight: {
+    fontFamily: getFontValue(fontFamilyConfig.headerRight),
+    fontSize: `${fontSizeConfig.headerRight}px`,
   },
   body: {
     fontFamily: getFontValue(fontFamilyConfig.body),
@@ -924,11 +985,11 @@ function scheduleRepaginate() {
 const paginationSignature = computed(() =>
   [
     cardData.content,
-    cardData.title,
+    cardData.headerLeft,
     cardData.author,
     cardData.time,
     display.icon,
-    display.title,
+    display.headerLeft,
     display.author,
     display.time,
     display.page,
@@ -940,13 +1001,13 @@ const paginationSignature = computed(() =>
     typography.padding,
     typography.radius,
     fontFamilyConfig.icon,
-    fontFamilyConfig.title,
+    fontFamilyConfig.headerLeft,
     fontFamilyConfig.body,
     fontFamilyConfig.author,
     fontFamilyConfig.time,
     fontFamilyConfig.page,
     fontSizeConfig.icon,
-    fontSizeConfig.title,
+    fontSizeConfig.headerLeft,
     fontSizeConfig.body,
     fontSizeConfig.author,
     fontSizeConfig.time,
@@ -976,6 +1037,8 @@ onMounted(() => {
   }
 
   window.addEventListener('resize', handleWindowResize)
+  window.addEventListener('pointermove', handleCoverDragMove)
+  window.addEventListener('pointerup', stopCoverDrag)
 
   if (window.ResizeObserver && previewFrameRef.value) {
     resizeObserver = new ResizeObserver(() => {
@@ -989,6 +1052,8 @@ onMounted(() => {
 onBeforeUnmount(() => {
   if (repaginateTimer) clearTimeout(repaginateTimer)
   if (handleWindowResize) window.removeEventListener('resize', handleWindowResize)
+  window.removeEventListener('pointermove', handleCoverDragMove)
+  window.removeEventListener('pointerup', stopCoverDrag)
   if (resizeObserver) resizeObserver.disconnect()
   for (let i = 0; i < uploadedFontObjectUrls.value.length; i += 1) {
     URL.revokeObjectURL(uploadedFontObjectUrls.value[i])
@@ -1007,14 +1072,15 @@ function resetAll() {
   templateId.value = 'clean'
 
   display.icon = true
-  display.title = true
+  display.headerLeft = true
   display.author = true
   display.time = true
   display.page = true
   display.watermark = true
 
   cardData.icon = '✦'
-  cardData.title = '文字卡片标题'
+  cardData.headerLeft = '经典句子摘抄'
+  cardData.headerRight = 'Classic Quote Extraction'
   cardData.content = '在左侧输入文案，快速生成用于分享的卡片内容。'
   cardData.author = '@Text2Card'
   cardData.time = formatNow()
@@ -1025,8 +1091,13 @@ function resetAll() {
   typography.padding = 56
   typography.radius = 28
 
+  headerLineStyle.color = '#9fb2bf'
+  headerLineStyle.type = 'solid'
+  headerLineStyle.thickness = 1
+
   fontFamilyConfig.icon = 'sans'
-  fontFamilyConfig.title = 'serif'
+  fontFamilyConfig.headerLeft = 'serif'
+  fontFamilyConfig.headerRight = 'nd-zh-alibaba-puhui'
   fontFamilyConfig.body = 'serif'
   fontFamilyConfig.author = 'sans'
   fontFamilyConfig.time = 'sans'
@@ -1034,7 +1105,8 @@ function resetAll() {
   fontFamilyConfig.watermark = 'sans'
 
   fontSizeConfig.icon = 28
-  fontSizeConfig.title = 32
+  fontSizeConfig.headerLeft = 20
+  fontSizeConfig.headerRight = 16
   fontSizeConfig.body = 24
   fontSizeConfig.author = 16
   fontSizeConfig.time = 15
@@ -1061,6 +1133,21 @@ function resetAll() {
   shadow.spread = 0
   shadow.color = '#121a2a'
   shadow.opacity = 0.28
+
+  coverFontFamilyConfig.title = 'nd-zh-huiwen-mingchao'
+  coverFontFamilyConfig.author = 'nd-zh-huiwen-mingchao'
+  coverFontFamilyConfig.subtitle = 'nd-zh-huiwen-mingchao'
+  coverFontFamilyConfig.quote = 'nd-zh-huiwen-mingchao'
+
+  coverFontSizeConfig.title = 55
+  coverFontSizeConfig.author = 30
+  coverFontSizeConfig.subtitle = 27
+  coverFontSizeConfig.quote = 27
+
+  coverDisplay.title = true
+  coverDisplay.author = true
+  coverDisplay.subtitle = true
+  coverDisplay.quote = true
 }
 
 function buildConfigSnapshot() {
@@ -1077,6 +1164,7 @@ function buildConfigSnapshot() {
       display: { ...display },
       cardData: { ...cardData },
       typography: { ...typography },
+      headerLineStyle: { ...headerLineStyle },
       fontFamilyConfig: { ...fontFamilyConfig },
       fontSizeConfig: { ...fontSizeConfig },
       themeMode: themeMode.value,
@@ -1092,6 +1180,11 @@ function buildConfigSnapshot() {
       imageOverlayColor: imageOverlayColor.value,
       watermarkOpacity: watermarkOpacity.value,
       shadow: { ...shadow },
+      coverData: { ...coverData },
+      coverFontFamilyConfig: { ...coverFontFamilyConfig },
+      coverFontSizeConfig: { ...coverFontSizeConfig },
+      coverOffsets: JSON.parse(JSON.stringify(coverOffsets)),
+      coverDisplay: { ...coverDisplay },
     },
   }
 }
@@ -1151,14 +1244,15 @@ function applyConfigSnapshot(raw) {
   )
 
   display.icon = pickBoolean(data?.display?.icon, true)
-  display.title = pickBoolean(data?.display?.title, true)
+  display.headerLeft = pickBoolean(data?.display?.headerLeft, true)
   display.author = pickBoolean(data?.display?.author, true)
   display.time = pickBoolean(data?.display?.time, true)
   display.page = pickBoolean(data?.display?.page, true)
   display.watermark = pickBoolean(data?.display?.watermark, true)
 
   cardData.icon = pickString(data?.cardData?.icon, '✦')
-  cardData.title = pickString(data?.cardData?.title, '文字卡片标题')
+  cardData.headerLeft = pickString(data?.cardData?.headerLeft, '经典句子摘抄')
+  cardData.headerRight = pickString(data?.cardData?.headerRight, 'Classic Quote Extraction')
   cardData.content = pickString(data?.cardData?.content, '在左侧输入文案，快速生成用于分享的卡片内容。')
   cardData.author = pickString(data?.cardData?.author, '@Text2Card')
   cardData.time = pickString(data?.cardData?.time, formatNow())
@@ -1169,8 +1263,12 @@ function applyConfigSnapshot(raw) {
   typography.padding = pickNumber(data?.typography?.padding, 56)
   typography.radius = pickNumber(data?.typography?.radius, 28)
 
+  headerLineStyle.type = pickEnum(data?.headerLineStyle?.type, ['solid', 'dashed', 'dotted'], 'solid')
+  headerLineStyle.thickness = pickNumber(data?.headerLineStyle?.thickness, 1)
+
   fontFamilyConfig.icon = resolveFontId(data?.fontFamilyConfig?.icon, 'sans')
-  fontFamilyConfig.title = resolveFontId(data?.fontFamilyConfig?.title, 'serif')
+  fontFamilyConfig.headerLeft = resolveFontId(data?.fontFamilyConfig?.headerLeft, 'serif')
+  fontFamilyConfig.headerRight = resolveFontId(data?.fontFamilyConfig?.headerRight, 'nd-zh-alibaba-puhui')
   fontFamilyConfig.body = resolveFontId(data?.fontFamilyConfig?.body, 'serif')
   fontFamilyConfig.author = resolveFontId(data?.fontFamilyConfig?.author, 'sans')
   fontFamilyConfig.time = resolveFontId(data?.fontFamilyConfig?.time, 'sans')
@@ -1178,7 +1276,8 @@ function applyConfigSnapshot(raw) {
   fontFamilyConfig.watermark = resolveFontId(data?.fontFamilyConfig?.watermark, 'sans')
 
   fontSizeConfig.icon = pickNumber(data?.fontSizeConfig?.icon, 28)
-  fontSizeConfig.title = pickNumber(data?.fontSizeConfig?.title, 32)
+  fontSizeConfig.headerLeft = pickNumber(data?.fontSizeConfig?.headerLeft, 20)
+  fontSizeConfig.headerRight = pickNumber(data?.fontSizeConfig?.headerRight, 16)
   fontSizeConfig.body = pickNumber(data?.fontSizeConfig?.body, 24)
   fontSizeConfig.author = pickNumber(data?.fontSizeConfig?.author, 16)
   fontSizeConfig.time = pickNumber(data?.fontSizeConfig?.time, 15)
@@ -1209,6 +1308,35 @@ function applyConfigSnapshot(raw) {
   shadow.spread = pickNumber(data?.shadow?.spread, 0)
   shadow.color = pickString(data?.shadow?.color, '#121a2a')
   shadow.opacity = pickNumber(data?.shadow?.opacity, 0.28)
+
+  coverData.title = pickString(data?.coverData?.title, coverData.title)
+  coverData.author = pickString(data?.coverData?.author, coverData.author)
+  coverData.subtitle = pickString(data?.coverData?.subtitle, coverData.subtitle)
+  coverData.quote = pickString(data?.coverData?.quote, coverData.quote)
+
+  coverFontFamilyConfig.title = resolveFontId(data?.coverFontFamilyConfig?.title, coverFontFamilyConfig.title)
+  coverFontFamilyConfig.author = resolveFontId(data?.coverFontFamilyConfig?.author, coverFontFamilyConfig.author)
+  coverFontFamilyConfig.subtitle = resolveFontId(data?.coverFontFamilyConfig?.subtitle, coverFontFamilyConfig.subtitle)
+  coverFontFamilyConfig.quote = resolveFontId(data?.coverFontFamilyConfig?.quote, coverFontFamilyConfig.quote)
+
+  coverFontSizeConfig.title = pickNumber(data?.coverFontSizeConfig?.title, coverFontSizeConfig.title)
+  coverFontSizeConfig.author = pickNumber(data?.coverFontSizeConfig?.author, coverFontSizeConfig.author)
+  coverFontSizeConfig.subtitle = pickNumber(data?.coverFontSizeConfig?.subtitle, coverFontSizeConfig.subtitle)
+  coverFontSizeConfig.quote = pickNumber(data?.coverFontSizeConfig?.quote, coverFontSizeConfig.quote)
+
+  coverDisplay.title = pickBoolean(data?.coverDisplay?.title, true)
+  coverDisplay.author = pickBoolean(data?.coverDisplay?.author, true)
+  coverDisplay.subtitle = pickBoolean(data?.coverDisplay?.subtitle, true)
+  coverDisplay.quote = pickBoolean(data?.coverDisplay?.quote, true)
+
+  coverOffsets.title.x = pickNumber(data?.coverOffsets?.title?.x, coverOffsets.title.x)
+  coverOffsets.title.y = pickNumber(data?.coverOffsets?.title?.y, coverOffsets.title.y)
+  coverOffsets.author.x = pickNumber(data?.coverOffsets?.author?.x, coverOffsets.author.x)
+  coverOffsets.author.y = pickNumber(data?.coverOffsets?.author?.y, coverOffsets.author.y)
+  coverOffsets.subtitle.x = pickNumber(data?.coverOffsets?.subtitle?.x, coverOffsets.subtitle.x)
+  coverOffsets.subtitle.y = pickNumber(data?.coverOffsets?.subtitle?.y, coverOffsets.subtitle.y)
+  coverOffsets.quote.x = pickNumber(data?.coverOffsets?.quote?.x, coverOffsets.quote.x)
+  coverOffsets.quote.y = pickNumber(data?.coverOffsets?.quote?.y, coverOffsets.quote.y)
 }
 
 function saveConfig() {
@@ -1242,6 +1370,60 @@ function onConfigUpload(event) {
 function getPreviewCards() {
   if (!previewFrameRef.value) return []
   return Array.from(previewFrameRef.value.querySelectorAll('.preview-card'))
+}
+
+function coverTextStyle(key) {
+  return {
+    fontFamily: getFontValue(coverFontFamilyConfig[key]),
+    fontSize: `${coverFontSizeConfig[key]}px`,
+  }
+}
+
+function coverTransformStyle(key) {
+  const offset = coverOffsets[key] || { x: 0, y: 0 }
+  return {
+    transform: `translate(${offset.x}px, ${offset.y}px)`,
+  }
+}
+
+
+function headerLineInlineStyle() {
+  const safeColor = resolvedTextColor.value
+  const lineType = ['solid', 'dashed', 'dotted'].includes(headerLineStyle.type) ? headerLineStyle.type : 'solid'
+  const thickness = Math.max(1, Math.min(12, Number(headerLineStyle.thickness) || 1))
+  return {
+    borderBottom: `${thickness}px ${lineType} ${safeColor}`,
+    width: '100%',
+  }
+}
+
+function startCoverDrag(key, event) {
+  if (!key || !coverOffsets[key]) return
+  event.preventDefault()
+  activeCoverDragKey.value = key
+  coverDragState.startX = event.clientX
+  coverDragState.startY = event.clientY
+  coverDragState.originX = coverOffsets[key].x
+  coverDragState.originY = coverOffsets[key].y
+}
+
+function handleCoverDragMove(event) {
+  const key = activeCoverDragKey.value
+  if (!key || !coverOffsets[key]) return
+  const deltaX = event.clientX - coverDragState.startX
+  const deltaY = event.clientY - coverDragState.startY
+  coverOffsets[key].x = Math.round(coverDragState.originX + deltaX)
+  coverOffsets[key].y = Math.round(coverDragState.originY + deltaY)
+}
+
+function stopCoverDrag() {
+  if (!activeCoverDragKey.value) return
+  activeCoverDragKey.value = ''
+}
+
+async function downloadCoverCard() {
+  if (!coverCardRef.value) return
+  await downloadCardNode(coverCardRef.value, `cover-card-${getTimeStamp()}.png`)
 }
 
 function getTimeStamp() {
@@ -1375,6 +1557,16 @@ async function downloadAllPages() {
       </div>
 
       <section class="section-block">
+        <h2>配置参数</h2>
+        <div class="chips">
+          <button type="button" class="chip" :class="{ active: panelTab === 'common' }" @click="panelTab = 'common'">通用</button>
+          <button type="button" class="chip" :class="{ active: panelTab === 'cover' }" @click="panelTab = 'cover'">封面</button>
+          <button type="button" class="chip" :class="{ active: panelTab === 'content' }" @click="panelTab = 'content'">内容</button>
+        </div>
+      </section>
+
+      <template v-if="panelTab === 'common'">
+      <section class="section-block">
         <h2>预设尺寸模板 + 尺寸控制</h2>
         <label class="field">
           <span>预设模板</span>
@@ -1443,7 +1635,7 @@ async function downloadAllPages() {
       </section>
 
       <section class="section-block">
-        <h2>内容与元素</h2>
+        <h2>内容基础</h2>
         <label class="field">
           <span>图标</span>
           <input v-model="cardData.icon" type="text" maxlength="4" />
@@ -1455,19 +1647,33 @@ async function downloadAllPages() {
         </label>
 
         <label class="field">
-          <span>标题（支持 Markdown）</span>
-          <input v-model="cardData.title" type="text" maxlength="200" />
+          <span>页眉左（支持 Markdown）</span>
+          <input v-model="cardData.headerLeft" type="text" maxlength="200" />
           <small class="field-hint">单字样式：<code>{{ INLINE_STYLE_MARK }}</code></small>
         </label>
 
         <label class="field">
-          <span>正文（支持 Markdown，输入 <code>{{ MANUAL_BREAK_MARK }}</code> 可手动分页）</span>
-          <textarea ref="contentTextareaRef" v-model="cardData.content" rows="9" maxlength="12000"></textarea>
+          <span>页眉右（支持 Markdown）</span>
+          <input v-model="cardData.headerRight" type="text" maxlength="120" />
           <small class="field-hint">单字样式：<code>{{ INLINE_STYLE_MARK }}</code></small>
         </label>
 
-        <div class="inline-actions">
-          <button type="button" class="btn ghost mini" @click="insertManualBreak">插入分页符</button>
+        <div class="field">
+          <span>页眉分隔线</span>
+        </div>
+        <div class="grid-fields">
+          <label class="field">
+            <span>线型</span>
+            <select v-model="headerLineStyle.type">
+              <option value="solid">实线</option>
+              <option value="dashed">虚线</option>
+              <option value="dotted">点线</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>线条粗细（px）</span>
+            <input v-model.number="headerLineStyle.thickness" type="number" min="1" max="12" />
+          </label>
         </div>
 
         <label class="field">
@@ -1495,7 +1701,7 @@ async function downloadAllPages() {
 
         <div class="toggle-grid">
           <label class="toggle-row"><input v-model="display.icon" type="checkbox" /> 显示图标</label>
-          <label class="toggle-row"><input v-model="display.title" type="checkbox" /> 显示标题</label>
+          <label class="toggle-row"><input v-model="display.headerLeft" type="checkbox" /> 显示页眉左</label>
           <label class="toggle-row"><input v-model="display.author" type="checkbox" /> 显示署名</label>
           <label class="toggle-row"><input v-model="display.time" type="checkbox" /> 显示时间</label>
           <label class="toggle-row"><input v-model="display.page" type="checkbox" /> 显示页码</label>
@@ -1702,16 +1908,107 @@ async function downloadAllPages() {
           </label>
         </div>
       </section>
-
       <div class="actions">
         <button class="btn ghost" type="button" @click="saveConfig">保存配置</button>
         <button class="btn ghost" type="button" @click="triggerLoadConfig">加载配置</button>
         <button class="btn ghost" type="button" @click="resetAll">恢复默认</button>
         <input ref="configFileInputRef" type="file" accept="application/json,.json" hidden @change="onConfigUpload" />
       </div>
+      </template>
+
+      <template v-else-if="panelTab === 'cover'">
+        <section class="section-block">
+          <h2>封面信息</h2>
+          <label class="field">
+            <span>封面标题</span>
+            <input v-model="coverData.title" type="text" maxlength="120" />
+          </label>
+          <label class="field">
+            <span>作者行</span>
+            <input v-model="coverData.author" type="text" maxlength="80" />
+          </label>
+          <label class="field">
+            <span>副标题</span>
+            <input v-model="coverData.subtitle" type="text" maxlength="120" />
+          </label>
+          <label class="field">
+            <span>引用句</span>
+            <textarea v-model="coverData.quote" rows="3" maxlength="240"></textarea>
+          </label>
+        </section>
+
+        <section class="section-block">
+          <h2>封面排版</h2>
+          <div class="stat-box">
+            <span>拖动标题/作者/副标题/引用句可调整位置</span>
+            <span>位置基于居中布局偏移，分隔线可独立拖动</span>
+          </div>
+          <div class="toggle-grid cover-toggle-grid">
+            <label class="toggle-row"><input v-model="coverDisplay.title" type="checkbox" /> 显示标题</label>
+            <label class="toggle-row"><input v-model="coverDisplay.author" type="checkbox" /> 显示作者</label>
+            <label class="toggle-row"><input v-model="coverDisplay.subtitle" type="checkbox" /> 显示副标题</label>
+            <label class="toggle-row"><input v-model="coverDisplay.quote" type="checkbox" /> 显示引用句</label>
+          </div>
+          <div class="font-grid cover-font-grid">
+            <div class="font-row">
+              <span class="font-row-label">标题</span>
+              <select v-model="coverFontFamilyConfig.title">
+                <option v-for="font in getSelectableFontOptions('headerLeft')" :key="font.id" :value="font.id">
+                  {{ font.name }}
+                </option>
+              </select>
+              <input v-model.number="coverFontSizeConfig.title" type="number" min="20" max="120" />
+            </div>
+            <div class="font-row">
+              <span class="font-row-label">作者</span>
+              <select v-model="coverFontFamilyConfig.author">
+                <option v-for="font in getSelectableFontOptions('author')" :key="font.id" :value="font.id">
+                  {{ font.name }}
+                </option>
+              </select>
+              <input v-model.number="coverFontSizeConfig.author" type="number" min="16" max="80" />
+            </div>
+            <div class="font-row">
+              <span class="font-row-label">副标题</span>
+              <select v-model="coverFontFamilyConfig.subtitle">
+                <option v-for="font in getSelectableFontOptions('body')" :key="font.id" :value="font.id">
+                  {{ font.name }}
+                </option>
+              </select>
+              <input v-model.number="coverFontSizeConfig.subtitle" type="number" min="16" max="80" />
+            </div>
+            <div class="font-row">
+              <span class="font-row-label">引用句</span>
+              <select v-model="coverFontFamilyConfig.quote">
+                <option v-for="font in getSelectableFontOptions('body')" :key="font.id" :value="font.id">
+                  {{ font.name }}
+                </option>
+              </select>
+              <input v-model.number="coverFontSizeConfig.quote" type="number" min="16" max="80" />
+            </div>
+          </div>
+        </section>
+
+      </template>
+
+      <template v-else>
+        <section class="section-block">
+          <h2>正文内容</h2>
+          <label class="field">
+            <span>正文（支持 Markdown，输入 <code>{{ MANUAL_BREAK_MARK }}</code> 可手动分页）</span>
+            <textarea ref="contentTextareaRef" v-model="cardData.content" rows="9" maxlength="12000"></textarea>
+            <small class="field-hint">单字样式：<code>{{ INLINE_STYLE_MARK }}</code></small>
+          </label>
+
+          <div class="inline-actions">
+            <button type="button" class="btn ghost mini" @click="insertManualBreak">插入分页符</button>
+          </div>
+        </section>
+      </template>
     </aside>
 
     <section class="preview-section">
+      <template v-if="previewMode === 'content'">
       <div class="preview-head">
         <strong>预设模板：{{ sizePresets.find((item) => item.id === sizePresetId)?.name || '自定义' }}</strong>
         <span>{{ currentSize.width }} × {{ currentSize.height }} · 共 {{ totalPages }} 页</span>
@@ -1749,16 +2046,27 @@ async function downloadAllPages() {
                     <span v-if="display.icon" class="card-icon" :style="fontStyle.icon">
                       {{ cardData.icon || '✦' }}
                     </span>
-                    <h2 v-if="display.title" class="card-title" :style="fontStyle.title" v-html="renderedTitleHtml"></h2>
+                    <h2 v-if="display.headerLeft" class="card-title" :style="fontStyle.headerLeft" v-html="renderedHeaderLeftHtml"></h2>
                   </div>
-                  <span v-if="display.page" class="card-page" :style="fontStyle.page">{{ pageText(index) }}</span>
+                  <span
+                    v-if="cardData.headerRight"
+                    class="card-head-right"
+                    :style="fontStyle.headerRight"
+                    v-html="renderedHeaderRightHtml"
+                  ></span>
                 </header>
+                <div class="card-head-line" :style="headerLineInlineStyle()"></div>
 
                 <div class="card-content" :style="fontStyle.body" v-html="pagedContentHtml[index]"></div>
 
                 <footer class="card-meta">
-                  <span v-if="display.author" class="meta-item" :style="fontStyle.author">{{ cardData.author || '@author' }}</span>
-                  <span v-if="display.time" class="meta-item" :style="fontStyle.time">{{ cardData.time || formatNow() }}</span>
+                  <div class="meta-left">
+                    <span v-if="display.author" class="meta-item" :style="fontStyle.author">{{ cardData.author || '@author' }}</span>
+                    <span v-if="display.time" class="meta-item" :style="fontStyle.time">{{ cardData.time || formatNow() }}</span>
+                  </div>
+                  <div v-if="display.page" class="meta-center">
+                    <span class="card-page" :style="fontStyle.page">{{ pageText(index) }}</span>
+                  </div>
                 </footer>
               </article>
               <button
@@ -1776,6 +2084,67 @@ async function downloadAllPages() {
           </section>
         </div>
       </div>
+      </template>
+
+      <template v-else>
+        <div class="preview-head">
+          <strong>封面卡片</strong>
+          <span>{{ currentSize.width }} × {{ currentSize.height }}</span>
+        </div>
+
+        <div class="preview-tools">
+          <button class="btn primary mini" type="button" :disabled="isExporting" @click="downloadCoverCard">
+            <span class="download-icon">⬇</span>
+            下载封面
+          </button>
+        </div>
+
+        <div class="preview-frame">
+          <div class="preview-stack">
+            <section class="page-panel">
+              <div class="preview-card-shell">
+                <article ref="coverCardRef" class="card cover-card" :style="[cardStyle, { width: `${previewCardWidth}px` }]">
+                  <div class="cover-text-stack">
+                    <div
+                      v-if="coverDisplay.title"
+                      class="cover-title cover-draggable"
+                      :style="[coverTextStyle('title'), coverTransformStyle('title')]"
+                      @pointerdown="startCoverDrag('title', $event)"
+                    >
+                      {{ coverData.title }}
+                    </div>
+                    <div
+                      v-if="coverDisplay.author"
+                      class="cover-author cover-draggable"
+                      :style="[coverTextStyle('author'), coverTransformStyle('author')]"
+                      @pointerdown="startCoverDrag('author', $event)"
+                    >
+                      {{ coverData.author }}
+                    </div>
+                    <div
+                      v-if="coverDisplay.subtitle"
+                      class="cover-subtitle cover-draggable"
+                      :style="[coverTextStyle('subtitle'), coverTransformStyle('subtitle')]"
+                      @pointerdown="startCoverDrag('subtitle', $event)"
+                    >
+                      {{ coverData.subtitle }}
+                    </div>
+
+                    <div
+                      v-if="coverDisplay.quote"
+                      class="cover-quote cover-draggable"
+                      :style="[coverTextStyle('quote'), coverTransformStyle('quote')]"
+                      @pointerdown="startCoverDrag('quote', $event)"
+                    >
+                      <p>{{ coverData.quote }}</p>
+                    </div>
+                  </div>
+                </article>
+              </div>
+            </section>
+          </div>
+        </div>
+      </template>
     </section>
 
     <div class="measure-root" aria-hidden="true">
@@ -1787,16 +2156,27 @@ async function downloadAllPages() {
         <header class="card-head">
           <div class="head-left">
             <span v-if="display.icon" class="card-icon" :style="fontStyle.icon">{{ cardData.icon || '✦' }}</span>
-            <h2 v-if="display.title" class="card-title" :style="fontStyle.title" v-html="renderedTitleHtml"></h2>
+            <h2 v-if="display.headerLeft" class="card-title" :style="fontStyle.headerLeft" v-html="renderedHeaderLeftHtml"></h2>
           </div>
-          <span v-if="display.page" class="card-page" :style="fontStyle.page">1 / 99</span>
+          <span
+            v-if="cardData.headerRight"
+            class="card-head-right"
+            :style="fontStyle.headerRight"
+            v-html="renderedHeaderRightHtml"
+          ></span>
         </header>
+        <div class="card-head-line" :style="headerLineInlineStyle()"></div>
 
         <div ref="measureContentRef" class="card-content" :style="fontStyle.body"></div>
 
         <footer class="card-meta">
-          <span v-if="display.author" class="meta-item" :style="fontStyle.author">{{ cardData.author || '@author' }}</span>
-          <span v-if="display.time" class="meta-item" :style="fontStyle.time">{{ cardData.time || formatNow() }}</span>
+          <div class="meta-left">
+            <span v-if="display.author" class="meta-item" :style="fontStyle.author">{{ cardData.author || '@author' }}</span>
+            <span v-if="display.time" class="meta-item" :style="fontStyle.time">{{ cardData.time || formatNow() }}</span>
+          </div>
+          <div v-if="display.page" class="meta-center">
+            <span class="card-page" :style="fontStyle.page">1 / 99</span>
+          </div>
         </footer>
       </article>
     </div>
