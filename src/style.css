@@ -245,6 +245,12 @@ input[type="checkbox"] {
     margin: 0 0 8px;
 }
 
+.inline-actions.wide {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+
 .inline-top-gap {
     margin-top: 8px;
 }
@@ -665,6 +671,14 @@ input[type="checkbox"] {
     padding-left: 0.7em;
     border-left: 3px solid rgba(255, 255, 255, 0.32);
     opacity: 0.95;
+}
+
+.card-content .content-textbox {
+    margin: 0.6em 0;
+    padding: 0.6em 0.9em;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    background: rgba(255, 255, 255, 0.18);
 }
 
 .card-content pre {

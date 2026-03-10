@@ -190,7 +190,7 @@ const CONFIG_FILE_VERSION = 1
 
 const previewFrameRef = ref(null)
 const measureContentRef = ref(null)
-const contentTextareaRef = ref(null)
+const contentTextareaRefs = ref([])
 const configFileInputRef = ref(null)
 const coverCardRef = ref(null)
 
@@ -231,6 +231,8 @@ const cardData = reactive({
   time: formatNow(),
   watermark: 'TEXT2CARD',
 })
+
+const contentBlocks = ref([cardData.content])
 
 const coverData = reactive({
   title: '《我与地坛》',
@@ -860,23 +862,49 @@ function toggleAspectRatioLock() {
   }
 }
 
-function insertManualBreak() {
+function insertManualBreak(index) {
   const marker = `\n${MANUAL_BREAK_MARK}\n`
-  const textarea = contentTextareaRef.value
+  const textarea = contentTextareaRefs.value?.[index]
   if (!textarea) {
-    cardData.content = `${cardData.content}${marker}`
+    const safeIndex = Number.isFinite(index) ? index : 0
+    const current = contentBlocks.value[safeIndex] ?? ''
+    contentBlocks.value[safeIndex] = `${current}${marker}`
     return
   }
 
-  const start = textarea.selectionStart ?? cardData.content.length
+  const start = textarea.selectionStart ?? 0
   const end = textarea.selectionEnd ?? start
-  cardData.content = `${cardData.content.slice(0, start)}${marker}${cardData.content.slice(end)}`
+  const safeIndex = Number.isFinite(index) ? index : 0
+  const current = contentBlocks.value[safeIndex] ?? ''
+  contentBlocks.value[safeIndex] = `${current.slice(0, start)}${marker}${current.slice(end)}`
 
   nextTick(() => {
     const cursor = start + marker.length
     textarea.focus()
     textarea.setSelectionRange(cursor, cursor)
   })
+}
+
+function insertTextBox(index) {
+  const safeIndex = Number.isFinite(index) ? index : contentBlocks.value.length - 1
+  const nextBlocks = [...contentBlocks.value]
+  nextBlocks.splice(safeIndex + 1, 0, '')
+  contentBlocks.value = nextBlocks
+  nextTick(() => {
+    const targetIndex = Math.min(safeIndex + 1, contentTextareaRefs.value.length - 1)
+    const textarea = contentTextareaRefs.value?.[targetIndex]
+    if (textarea) {
+      textarea.focus()
+    }
+  })
+}
+
+function removeTextBox(index) {
+  if (contentBlocks.value.length <= 1) return
+  const safeIndex = Number.isFinite(index) ? index : contentBlocks.value.length - 1
+  const nextBlocks = [...contentBlocks.value]
+  nextBlocks.splice(safeIndex, 1)
+  contentBlocks.value = nextBlocks.length ? nextBlocks : ['']
 }
 
 function normalizeBreakMarks(text) {
@@ -948,17 +976,20 @@ async function repaginate() {
 
   const maxHeight = measureContentRef.value.clientHeight
   if (!maxHeight) {
-    pagedContents.value = [normalizeBreakMarks(cardData.content).replace(/\f/g, '') || '']
+    const fallbackBlocks = contentBlocks.value.length ? contentBlocks.value : [cardData.content]
+    pagedContents.value = fallbackBlocks.map((block) => normalizeBreakMarks(block).replace(/\f/g, '') || '')
     return
   }
 
-  const normalized = normalizeBreakMarks(cardData.content)
-  const manualSections = normalized.split('\f')
   const pages = []
 
-  for (let i = 0; i < manualSections.length; i += 1) {
-    const section = manualSections[i]
-    pages.push(...paginateSection(section, maxHeight))
+  const blocks = contentBlocks.value.length ? contentBlocks.value : [cardData.content]
+  for (let i = 0; i < blocks.length; i += 1) {
+    const normalized = normalizeBreakMarks(blocks[i])
+    const manualSections = normalized.split('\f')
+    for (let j = 0; j < manualSections.length; j += 1) {
+      pages.push(...paginateSection(manualSections[j], maxHeight))
+    }
   }
 
   pagedContents.value = pages.length ? pages : ['']
@@ -984,7 +1015,7 @@ function scheduleRepaginate() {
 
 const paginationSignature = computed(() =>
   [
-    cardData.content,
+    contentBlocks.value.join('\n'),
     cardData.headerLeft,
     cardData.author,
     cardData.time,
@@ -1022,6 +1053,24 @@ watch(
     scheduleRepaginate()
   },
   { immediate: true },
+)
+
+watch(
+  contentBlocks,
+  (blocks) => {
+    cardData.content = blocks.join('\n')
+  },
+  { deep: true },
+)
+
+watch(
+  () => cardData.content,
+  (value) => {
+    const joined = contentBlocks.value.join('\n')
+    if (value !== joined) {
+      contentBlocks.value = [value]
+    }
+  },
 )
 
 let resizeObserver = null
@@ -1084,6 +1133,7 @@ function resetAll() {
   cardData.headerLeft = '经典句子摘抄'
   cardData.headerRight = 'Classic Quote Extraction'
   cardData.content = '在左侧输入文案，快速生成用于分享的卡片内容。'
+  contentBlocks.value = [cardData.content]
   cardData.author = '@Text2Card'
   cardData.time = formatNow()
   cardData.watermark = 'TEXT2CARD'
@@ -1254,6 +1304,7 @@ function applyConfigSnapshot(raw) {
   cardData.headerLeft = pickString(data?.cardData?.headerLeft, '经典句子摘抄')
   cardData.headerRight = pickString(data?.cardData?.headerRight, 'Classic Quote Extraction')
   cardData.content = pickString(data?.cardData?.content, '在左侧输入文案，快速生成用于分享的卡片内容。')
+  contentBlocks.value = [cardData.content]
   cardData.author = pickString(data?.cardData?.author, '@Text2Card')
   cardData.time = pickString(data?.cardData?.time, formatNow())
   cardData.watermark = pickString(data?.cardData?.watermark, 'TEXT2CARD')
@@ -2000,14 +2051,18 @@ async function downloadAllPages() {
       <template v-else>
         <section class="section-block">
           <h2>正文内容</h2>
-          <label class="field">
-            <span>正文（支持 Markdown，输入 <code>{{ MANUAL_BREAK_MARK }}</code> 可手动分页）</span>
-            <textarea ref="contentTextareaRef" v-model="cardData.content" rows="9" maxlength="12000"></textarea>
-            <small class="field-hint">单字样式：<code>{{ INLINE_STYLE_MARK }}</code></small>
-          </label>
+          <div v-for="(block, index) in contentBlocks" :key="`content-block-${index}`">
+            <label class="field">
+              <span>正文（支持 Markdown，输入 <code>{{ MANUAL_BREAK_MARK }}</code> 可手动分页）</span>
+              <textarea ref="contentTextareaRefs" v-model="contentBlocks[index]" rows="9" maxlength="12000"></textarea>
+              <small class="field-hint">单字样式：<code>{{ INLINE_STYLE_MARK }}</code></small>
+            </label>
 
-          <div class="inline-actions">
-            <button type="button" class="btn ghost mini" @click="insertManualBreak">插入分页符</button>
+            <div class="inline-actions wide">
+              <button type="button" class="btn ghost mini" @click="insertManualBreak(index)">插入分页符</button>
+              <button type="button" class="btn ghost mini" @click="insertTextBox(index)">插入文本框</button>
+              <button type="button" class="btn ghost mini" :disabled="contentBlocks.length <= 1" @click="removeTextBox(index)">删除文本框</button>
+            </div>
           </div>
         </section>
       </template>
