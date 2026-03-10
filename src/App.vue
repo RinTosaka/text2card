@@ -188,9 +188,12 @@ const fontTargetOptions = [
 
 const iconQuickPick = ['✦', '✿', '☕', '📌', '📝', '💡', '🚀', '🤖']
 
+const CONFIG_FILE_VERSION = 1
+
 const previewFrameRef = ref(null)
 const measureContentRef = ref(null)
 const contentTextareaRef = ref(null)
+const configFileInputRef = ref(null)
 
 const isExporting = ref(false)
 const previewCardWidth = ref(700)
@@ -1060,6 +1063,182 @@ function resetAll() {
   shadow.opacity = 0.28
 }
 
+function buildConfigSnapshot() {
+  return {
+    version: CONFIG_FILE_VERSION,
+    savedAt: new Date().toISOString(),
+    payload: {
+      selectedFontCategory: selectedFontCategory.value,
+      sizePresetId: sizePresetId.value,
+      sizeControl: { width: sizeControl.width, height: sizeControl.height },
+      aspectRatioLocked: aspectRatioLocked.value,
+      lockedAspectRatio: lockedAspectRatio.value,
+      templateId: templateId.value,
+      display: { ...display },
+      cardData: { ...cardData },
+      typography: { ...typography },
+      fontFamilyConfig: { ...fontFamilyConfig },
+      fontSizeConfig: { ...fontSizeConfig },
+      themeMode: themeMode.value,
+      presetThemeId: presetThemeId.value,
+      usePresetTextColor: usePresetTextColor.value,
+      customTextColor: customTextColor.value,
+      solidColor: solidColor.value,
+      gradientStart: gradientStart.value,
+      gradientEnd: gradientEnd.value,
+      gradientAngle: gradientAngle.value,
+      imageUrl: imageUrl.value,
+      imageOverlay: imageOverlay.value,
+      imageOverlayColor: imageOverlayColor.value,
+      watermarkOpacity: watermarkOpacity.value,
+      shadow: { ...shadow },
+    },
+  }
+}
+
+function pickNumber(value, fallback) {
+  const num = Number(value)
+  return Number.isFinite(num) ? num : fallback
+}
+
+function pickString(value, fallback) {
+  return typeof value === 'string' ? value : fallback
+}
+
+function pickBoolean(value, fallback) {
+  return typeof value === 'boolean' ? value : fallback
+}
+
+function pickEnum(value, options, fallback) {
+  return options.includes(value) ? value : fallback
+}
+
+function resolveFontId(value, fallback) {
+  const text = typeof value === 'string' ? value : ''
+  if (!text) return fallback
+  const found = allFontOptions.value.some((item) => item.id === text)
+  return found ? text : fallback
+}
+
+function applyConfigSnapshot(raw) {
+  const data = raw?.payload || raw
+  if (!data || typeof data !== 'object') {
+    window.alert('配置文件内容无效。')
+    return
+  }
+
+  selectedFontCategory.value = pickEnum(
+    data.selectedFontCategory,
+    fontCategoryOptions.map((item) => item.id),
+    'all',
+  )
+
+  sizePresetId.value = pickEnum(
+    data.sizePresetId,
+    sizePresets.map((item) => item.id).concat(['custom']),
+    'custom',
+  )
+  sizeControl.width = clampDimension(data?.sizeControl?.width, 1080)
+  sizeControl.height = clampDimension(data?.sizeControl?.height, 1350)
+
+  aspectRatioLocked.value = pickBoolean(data.aspectRatioLocked, true)
+  lockedAspectRatio.value = pickNumber(data.lockedAspectRatio, (sizeControl.width || 1080) / (sizeControl.height || 1080))
+
+  templateId.value = pickEnum(
+    data.templateId,
+    cardTemplates.map((item) => item.id),
+    'clean',
+  )
+
+  display.icon = pickBoolean(data?.display?.icon, true)
+  display.title = pickBoolean(data?.display?.title, true)
+  display.author = pickBoolean(data?.display?.author, true)
+  display.time = pickBoolean(data?.display?.time, true)
+  display.page = pickBoolean(data?.display?.page, true)
+  display.watermark = pickBoolean(data?.display?.watermark, true)
+
+  cardData.icon = pickString(data?.cardData?.icon, '✦')
+  cardData.title = pickString(data?.cardData?.title, '文字卡片标题')
+  cardData.content = pickString(data?.cardData?.content, '在左侧输入文案，快速生成用于分享的卡片内容。')
+  cardData.author = pickString(data?.cardData?.author, '@Text2Card')
+  cardData.time = pickString(data?.cardData?.time, formatNow())
+  cardData.watermark = pickString(data?.cardData?.watermark, 'TEXT2CARD')
+
+  typography.align = pickEnum(data?.typography?.align, ['left', 'center', 'right'], 'left')
+  typography.lineHeight = pickNumber(data?.typography?.lineHeight, 1.5)
+  typography.padding = pickNumber(data?.typography?.padding, 56)
+  typography.radius = pickNumber(data?.typography?.radius, 28)
+
+  fontFamilyConfig.icon = resolveFontId(data?.fontFamilyConfig?.icon, 'sans')
+  fontFamilyConfig.title = resolveFontId(data?.fontFamilyConfig?.title, 'serif')
+  fontFamilyConfig.body = resolveFontId(data?.fontFamilyConfig?.body, 'serif')
+  fontFamilyConfig.author = resolveFontId(data?.fontFamilyConfig?.author, 'sans')
+  fontFamilyConfig.time = resolveFontId(data?.fontFamilyConfig?.time, 'sans')
+  fontFamilyConfig.page = resolveFontId(data?.fontFamilyConfig?.page, 'mono')
+  fontFamilyConfig.watermark = resolveFontId(data?.fontFamilyConfig?.watermark, 'sans')
+
+  fontSizeConfig.icon = pickNumber(data?.fontSizeConfig?.icon, 28)
+  fontSizeConfig.title = pickNumber(data?.fontSizeConfig?.title, 32)
+  fontSizeConfig.body = pickNumber(data?.fontSizeConfig?.body, 24)
+  fontSizeConfig.author = pickNumber(data?.fontSizeConfig?.author, 16)
+  fontSizeConfig.time = pickNumber(data?.fontSizeConfig?.time, 15)
+  fontSizeConfig.page = pickNumber(data?.fontSizeConfig?.page, 15)
+  fontSizeConfig.watermark = pickNumber(data?.fontSizeConfig?.watermark, 20)
+
+  themeMode.value = pickEnum(data.themeMode, ['preset', 'solid', 'gradient', 'image'], 'preset')
+  presetThemeId.value = pickEnum(
+    data.presetThemeId,
+    themePresets.map((item) => item.id),
+    'sunrise',
+  )
+  usePresetTextColor.value = pickBoolean(data.usePresetTextColor, true)
+  customTextColor.value = pickString(data.customTextColor, '#1d2430')
+  solidColor.value = pickString(data.solidColor, '#f3eee4')
+  gradientStart.value = pickString(data.gradientStart, '#f7d4c3')
+  gradientEnd.value = pickString(data.gradientEnd, '#f1a58f')
+  gradientAngle.value = pickNumber(data.gradientAngle, 140)
+  imageUrl.value = pickString(data.imageUrl, '')
+  imageOverlay.value = pickNumber(data.imageOverlay, 0.2)
+  imageOverlayColor.value = pickString(data.imageOverlayColor, '#000000')
+  watermarkOpacity.value = pickNumber(data.watermarkOpacity, 0.12)
+
+  shadow.enabled = pickBoolean(data?.shadow?.enabled, true)
+  shadow.x = pickNumber(data?.shadow?.x, 0)
+  shadow.y = pickNumber(data?.shadow?.y, 16)
+  shadow.blur = pickNumber(data?.shadow?.blur, 40)
+  shadow.spread = pickNumber(data?.shadow?.spread, 0)
+  shadow.color = pickString(data?.shadow?.color, '#121a2a')
+  shadow.opacity = pickNumber(data?.shadow?.opacity, 0.28)
+}
+
+function saveConfig() {
+  const payload = buildConfigSnapshot()
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })
+  downloadBlob(blob, `text2card-config-${getTimeStamp()}.json`)
+}
+
+function triggerLoadConfig() {
+  configFileInputRef.value?.click()
+}
+
+function onConfigUpload(event) {
+  const file = event.target?.files?.[0]
+  if (!file) return
+
+  const reader = new FileReader()
+  reader.onload = () => {
+    try {
+      const parsed = JSON.parse(String(reader.result || '{}'))
+      applyConfigSnapshot(parsed)
+    } catch (error) {
+      console.error(error)
+      window.alert('配置文件解析失败，请检查文件格式。')
+    }
+  }
+  reader.readAsText(file)
+  event.target.value = ''
+}
+
 function getPreviewCards() {
   if (!previewFrameRef.value) return []
   return Array.from(previewFrameRef.value.querySelectorAll('.preview-card'))
@@ -1525,7 +1704,10 @@ async function downloadAllPages() {
       </section>
 
       <div class="actions">
+        <button class="btn ghost" type="button" @click="saveConfig">保存配置</button>
+        <button class="btn ghost" type="button" @click="triggerLoadConfig">加载配置</button>
         <button class="btn ghost" type="button" @click="resetAll">恢复默认</button>
+        <input ref="configFileInputRef" type="file" accept="application/json,.json" hidden @change="onConfigUpload" />
       </div>
     </aside>
 
