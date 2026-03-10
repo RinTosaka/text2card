@@ -23,9 +23,6 @@ const sizePresets = [
 const cardTemplates = [
   { id: 'clean', name: '简约' },
   { id: 'handwriting', name: '手写' },
-  { id: 'code', name: '代码' },
-  { id: 'sticky', name: '便签' },
-  { id: 'memo', name: '备忘录' },
 ]
 
 const themePresets = [
@@ -127,6 +124,12 @@ const themePresets = [
   },
 ]
 
+const bgImagePresets = [
+  { id: 'paper-01', name: '卡纸 01', url: '/bgImages/卡纸01.jpg' },
+  { id: 'paper-02', name: '卡纸 02', url: '/bgImages/卡纸02.jpg' },
+  { id: 'paper-03', name: '卡纸 03', url: '/bgImages/卡纸03.jpg' },
+]
+
 const builtInFontOptions = [
   { id: 'system-default', name: '系统默认', value: "'PingFang SC','Microsoft YaHei','Helvetica Neue',Arial,sans-serif", category: 'zh' },
   { id: 'sans', name: '思源黑体 / Noto Sans SC', value: "'Noto Sans SC','Source Han Sans SC','PingFang SC','Microsoft YaHei',sans-serif", category: 'zh' },
@@ -169,12 +172,6 @@ const ndLocalFontOptions = ndLocalFontDefinitions.map((item) => ({
   category: item.category,
 }))
 
-const fontCategoryOptions = [
-  { id: 'all', label: '全部' },
-  { id: 'zh', label: '中文字体' },
-  { id: 'en', label: '英文字体' },
-  { id: 'uploaded', label: '我上传的字体' },
-]
 
 const fontTargetOptions = [
   { key: 'icon', label: '图标' },
@@ -217,6 +214,8 @@ const templateId = ref('clean')
 const display = reactive({
   icon: true,
   headerLeft: true,
+  headerRight: true,
+  headerLine: true,
   author: true,
   time: true,
   page: true,
@@ -289,14 +288,14 @@ const headerLineStyle = reactive({
 })
 
 const fontFamilyConfig = reactive({
-  icon: 'sans',
-  headerLeft: 'serif',
-  headerRight: 'nd-zh-alibaba-puhui',
-  body: 'serif',
-  author: 'sans',
-  time: 'sans',
-  page: 'mono',
-  watermark: 'sans',
+  icon: 'nd-zh-huiwen-mingchao',
+  headerLeft: 'nd-zh-huiwen-mingchao',
+  headerRight: 'nd-zh-huiwen-mingchao',
+  body: 'nd-zh-huiwen-mingchao',
+  author: 'nd-zh-huiwen-mingchao',
+  time: 'nd-zh-huiwen-mingchao',
+  page: 'nd-zh-huiwen-mingchao',
+  watermark: 'nd-zh-huiwen-mingchao',
 })
 
 const fontSizeConfig = reactive({
@@ -359,12 +358,7 @@ const currentSize = computed(() => {
 const currentTheme = computed(() => themePresets.find((item) => item.id === presetThemeId.value) || themePresets[0])
 const totalPages = computed(() => Math.max(1, pagedContents.value.length))
 const allFontOptions = computed(() => mergeAndDeduplicateFontOptions([...builtInFontOptions, ...ndLocalFontOptions, ...uploadedFontOptions.value]))
-const filteredFontOptions = computed(() => {
-  if (selectedFontCategory.value === 'all') {
-    return allFontOptions.value
-  }
-  return allFontOptions.value.filter((item) => item.category === selectedFontCategory.value)
-})
+const filteredFontOptions = computed(() => allFontOptions.value)
 const renderedHeaderLeftHtml = computed(() => renderMarkdownInline(cardData.headerLeft, '未命名标题'))
 const renderedHeaderRightHtml = computed(() => renderMarkdownInline(cardData.headerRight, ''))
 const pagedContentHtml = computed(() => pagedContents.value.map((content) => renderMarkdownBody(content, '请在左侧输入正文内容。')))
@@ -818,6 +812,12 @@ function onImageUpload(event) {
   reader.readAsDataURL(file)
 }
 
+function applyPresetBgImage(url) {
+  if (!url) return
+  imageUrl.value = url
+  themeMode.value = 'image'
+}
+
 function clearImage() {
   imageUrl.value = ''
 }
@@ -1073,6 +1073,8 @@ function resetAll() {
 
   display.icon = true
   display.headerLeft = true
+  display.headerRight = true
+  display.headerLine = true
   display.author = true
   display.time = true
   display.page = true
@@ -1095,14 +1097,14 @@ function resetAll() {
   headerLineStyle.type = 'solid'
   headerLineStyle.thickness = 1
 
-  fontFamilyConfig.icon = 'sans'
-  fontFamilyConfig.headerLeft = 'serif'
-  fontFamilyConfig.headerRight = 'nd-zh-alibaba-puhui'
-  fontFamilyConfig.body = 'serif'
-  fontFamilyConfig.author = 'sans'
-  fontFamilyConfig.time = 'sans'
-  fontFamilyConfig.page = 'mono'
-  fontFamilyConfig.watermark = 'sans'
+  fontFamilyConfig.icon = 'nd-zh-huiwen-mingchao'
+  fontFamilyConfig.headerLeft = 'nd-zh-huiwen-mingchao'
+  fontFamilyConfig.headerRight = 'nd-zh-huiwen-mingchao'
+  fontFamilyConfig.body = 'nd-zh-huiwen-mingchao'
+  fontFamilyConfig.author = 'nd-zh-huiwen-mingchao'
+  fontFamilyConfig.time = 'nd-zh-huiwen-mingchao'
+  fontFamilyConfig.page = 'nd-zh-huiwen-mingchao'
+  fontFamilyConfig.watermark = 'nd-zh-huiwen-mingchao'
 
   fontSizeConfig.icon = 28
   fontSizeConfig.headerLeft = 20
@@ -1220,11 +1222,7 @@ function applyConfigSnapshot(raw) {
     return
   }
 
-  selectedFontCategory.value = pickEnum(
-    data.selectedFontCategory,
-    fontCategoryOptions.map((item) => item.id),
-    'all',
-  )
+  selectedFontCategory.value = 'all'
 
   sizePresetId.value = pickEnum(
     data.sizePresetId,
@@ -1245,6 +1243,8 @@ function applyConfigSnapshot(raw) {
 
   display.icon = pickBoolean(data?.display?.icon, true)
   display.headerLeft = pickBoolean(data?.display?.headerLeft, true)
+  display.headerRight = pickBoolean(data?.display?.headerRight, true)
+  display.headerLine = pickBoolean(data?.display?.headerLine, true)
   display.author = pickBoolean(data?.display?.author, true)
   display.time = pickBoolean(data?.display?.time, true)
   display.page = pickBoolean(data?.display?.page, true)
@@ -1266,14 +1266,14 @@ function applyConfigSnapshot(raw) {
   headerLineStyle.type = pickEnum(data?.headerLineStyle?.type, ['solid', 'dashed', 'dotted'], 'solid')
   headerLineStyle.thickness = pickNumber(data?.headerLineStyle?.thickness, 1)
 
-  fontFamilyConfig.icon = resolveFontId(data?.fontFamilyConfig?.icon, 'sans')
-  fontFamilyConfig.headerLeft = resolveFontId(data?.fontFamilyConfig?.headerLeft, 'serif')
-  fontFamilyConfig.headerRight = resolveFontId(data?.fontFamilyConfig?.headerRight, 'nd-zh-alibaba-puhui')
-  fontFamilyConfig.body = resolveFontId(data?.fontFamilyConfig?.body, 'serif')
-  fontFamilyConfig.author = resolveFontId(data?.fontFamilyConfig?.author, 'sans')
-  fontFamilyConfig.time = resolveFontId(data?.fontFamilyConfig?.time, 'sans')
-  fontFamilyConfig.page = resolveFontId(data?.fontFamilyConfig?.page, 'mono')
-  fontFamilyConfig.watermark = resolveFontId(data?.fontFamilyConfig?.watermark, 'sans')
+  fontFamilyConfig.icon = resolveFontId(data?.fontFamilyConfig?.icon, 'nd-zh-huiwen-mingchao')
+  fontFamilyConfig.headerLeft = resolveFontId(data?.fontFamilyConfig?.headerLeft, 'nd-zh-huiwen-mingchao')
+  fontFamilyConfig.headerRight = resolveFontId(data?.fontFamilyConfig?.headerRight, 'nd-zh-huiwen-mingchao')
+  fontFamilyConfig.body = resolveFontId(data?.fontFamilyConfig?.body, 'nd-zh-huiwen-mingchao')
+  fontFamilyConfig.author = resolveFontId(data?.fontFamilyConfig?.author, 'nd-zh-huiwen-mingchao')
+  fontFamilyConfig.time = resolveFontId(data?.fontFamilyConfig?.time, 'nd-zh-huiwen-mingchao')
+  fontFamilyConfig.page = resolveFontId(data?.fontFamilyConfig?.page, 'nd-zh-huiwen-mingchao')
+  fontFamilyConfig.watermark = resolveFontId(data?.fontFamilyConfig?.watermark, 'nd-zh-huiwen-mingchao')
 
   fontSizeConfig.icon = pickNumber(data?.fontSizeConfig?.icon, 28)
   fontSizeConfig.headerLeft = pickNumber(data?.fontSizeConfig?.headerLeft, 20)
@@ -1344,6 +1344,7 @@ function saveConfig() {
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })
   downloadBlob(blob, `text2card-config-${getTimeStamp()}.json`)
 }
+
 
 function triggerLoadConfig() {
   configFileInputRef.value?.click()
@@ -1702,6 +1703,8 @@ async function downloadAllPages() {
         <div class="toggle-grid">
           <label class="toggle-row"><input v-model="display.icon" type="checkbox" /> 显示图标</label>
           <label class="toggle-row"><input v-model="display.headerLeft" type="checkbox" /> 显示页眉左</label>
+          <label class="toggle-row"><input v-model="display.headerRight" type="checkbox" /> 显示页眉右</label>
+          <label class="toggle-row"><input v-model="display.headerLine" type="checkbox" /> 显示页眉分隔线</label>
           <label class="toggle-row"><input v-model="display.author" type="checkbox" /> 显示署名</label>
           <label class="toggle-row"><input v-model="display.time" type="checkbox" /> 显示时间</label>
           <label class="toggle-row"><input v-model="display.page" type="checkbox" /> 显示页码</label>
@@ -1712,14 +1715,6 @@ async function downloadAllPages() {
       <section class="section-block">
         <h2>字体选择（独立控制 + 字号）</h2>
         <div class="font-tools">
-          <label class="field">
-            <span>字体分类</span>
-            <select v-model="selectedFontCategory">
-              <option v-for="item in fontCategoryOptions" :key="item.id" :value="item.id">
-                {{ item.label }}
-              </option>
-            </select>
-          </label>
           <label class="field">
             <span>上传字体（ttf/otf/woff/woff2）</span>
             <input type="file" accept=".ttf,.otf,.woff,.woff2,font/ttf,font/otf,font/woff,font/woff2" multiple @change="onFontUpload" />
@@ -1868,6 +1863,17 @@ async function downloadAllPages() {
             <span>上传背景图片</span>
             <input type="file" accept="image/*" @change="onImageUpload" />
           </label>
+          <div class="inline-actions">
+            <button
+              v-for="preset in bgImagePresets"
+              :key="preset.id"
+              type="button"
+              class="btn ghost mini"
+              @click="applyPresetBgImage(preset.url)"
+            >
+              {{ preset.name }}
+            </button>
+          </div>
           <div class="inline-actions">
             <button type="button" class="btn ghost mini" :disabled="!imageUrl" @click="clearImage">清除背景图</button>
           </div>
@@ -2049,13 +2055,16 @@ async function downloadAllPages() {
                     <h2 v-if="display.headerLeft" class="card-title" :style="fontStyle.headerLeft" v-html="renderedHeaderLeftHtml"></h2>
                   </div>
                   <span
-                    v-if="cardData.headerRight"
+                    v-if="display.headerRight && cardData.headerRight"
                     class="card-head-right"
                     :style="fontStyle.headerRight"
                     v-html="renderedHeaderRightHtml"
                   ></span>
                 </header>
-                <div class="card-head-line" :style="headerLineInlineStyle()"></div>
+                <div
+                  class="card-head-line"
+                  :style="[headerLineInlineStyle(), display.headerLine ? null : { borderBottom: '0', opacity: 0 }]"
+                ></div>
 
                 <div class="card-content" :style="fontStyle.body" v-html="pagedContentHtml[index]"></div>
 
@@ -2159,13 +2168,16 @@ async function downloadAllPages() {
             <h2 v-if="display.headerLeft" class="card-title" :style="fontStyle.headerLeft" v-html="renderedHeaderLeftHtml"></h2>
           </div>
           <span
-            v-if="cardData.headerRight"
+            v-if="display.headerRight && cardData.headerRight"
             class="card-head-right"
             :style="fontStyle.headerRight"
             v-html="renderedHeaderRightHtml"
           ></span>
         </header>
-        <div class="card-head-line" :style="headerLineInlineStyle()"></div>
+        <div
+          class="card-head-line"
+          :style="[headerLineInlineStyle(), display.headerLine ? null : { borderBottom: '0', opacity: 0 }]"
+        ></div>
 
         <div ref="measureContentRef" class="card-content" :style="fontStyle.body"></div>
 
