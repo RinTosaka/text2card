@@ -61,7 +61,7 @@
       "watermark": 20
     },
     "themeMode": "preset",
-    "presetThemeId": "forest",
+    "presetThemeId": "ink",
     "usePresetTextColor": true,
     "customTextColor": "#1d2430",
     "solidColor": "#f3eee4",
@@ -97,7 +97,7 @@
       "title": 55,
       "author": 30,
       "subtitle": 27,
-      "quote": 30
+      "quote": 27
     },
     "coverSpacing": {
       "title": 150,

@@ -926,6 +926,15 @@ input[type="checkbox"] {
     z-index: -1;
 }
 
+.export-root {
+    position: fixed;
+    left: -99999px;
+    top: 0;
+    opacity: 0;
+    pointer-events: none;
+    z-index: -1;
+}
+
 .measure-card {
     transform: none !important;
 }

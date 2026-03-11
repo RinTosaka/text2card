@@ -196,6 +196,7 @@ const measureContentRef = ref(null)
 const contentTextareaRefs = ref([])
 const configFileInputRef = ref(null)
 const coverCardRef = ref(null)
+const coverExportRef = ref(null)
 
 const isExporting = ref(false)
 const previewCardWidth = ref(700)
@@ -316,7 +317,7 @@ const fontSizeConfig = reactive({
 })
 
 const themeMode = ref('preset')
-const presetThemeId = ref('sunrise')
+const presetThemeId = ref('ink')
 const usePresetTextColor = ref(true)
 const customTextColor = ref('#1d2430')
 const solidColor = ref('#f3eee4')
@@ -744,6 +745,10 @@ function renderMarkdownBody(text, fallback = '') {
     console.error(error)
   }
   return `<p>${escapeHtml(source)}</p>`
+}
+
+function renderPlainBreaks(text) {
+  return escapeHtml(String(text || '')).replace(/\n/g, '<br>')
 }
 
 function preserveBlankLines(text) {
@@ -1213,7 +1218,7 @@ function resetAll() {
   fontSizeConfig.watermark = 20
 
   themeMode.value = 'preset'
-  presetThemeId.value = 'sunrise'
+  presetThemeId.value = 'ink'
   usePresetTextColor.value = true
   customTextColor.value = '#1d2430'
   solidColor.value = '#f3eee4'
@@ -1518,7 +1523,7 @@ function applyConfigSnapshot(raw) {
   presetThemeId.value = pickEnum(
     data.presetThemeId,
     themePresets.map((item) => item.id),
-    'sunrise',
+    'ink',
   )
   usePresetTextColor.value = pickBoolean(data.usePresetTextColor, true)
   customTextColor.value = pickString(data.customTextColor, '#1d2430')
@@ -1659,8 +1664,12 @@ function setCoverAlign(nextAlign) {
 }
 
 async function downloadCoverCard() {
-  if (!coverCardRef.value) return
-  await downloadCardNode(coverCardRef.value, `cover-card-${getTimeStamp()}.png`)
+  const node = coverCardRef.value || coverExportRef.value
+  if (!node) {
+    window.alert('封面尚未准备好，请稍后重试。')
+    return
+  }
+  await downloadCardNode(node, `cover-card-${getTimeStamp()}.png`)
 }
 
 function getTimeStamp() {
@@ -1743,6 +1752,13 @@ async function downloadAllPages() {
     const stamp = getTimeStamp()
     if (bulkDownloadMode.value === 'zip') {
       const zip = new JSZip()
+      const configJson = JSON.stringify(buildConfigSnapshot(), null, 2)
+      zip.file(`text2card-config-${stamp}.json`, configJson)
+      const coverNode = coverCardRef.value || coverExportRef.value
+      if (coverNode) {
+        const coverBlob = await renderCardBlob(coverNode)
+        zip.file(`text-card-cover-${stamp}.png`, coverBlob)
+      }
       for (let i = 0; i < cards.length; i += 1) {
         const blob = await renderCardBlob(cards[i])
         zip.file(`text-card-p${i + 1}-of-${cards.length}.png`, blob)
@@ -2459,7 +2475,7 @@ async function downloadAllPages() {
                       class="cover-quote"
                       :style="[coverTextStyle('quote'), coverSpacingStyle('quote')]"
                     >
-                      <p>{{ coverData.quote }}</p>
+                      <p v-html="renderPlainBreaks(coverData.quote)"></p>
                     </div>
                   </div>
                 </article>
@@ -2469,6 +2485,42 @@ async function downloadAllPages() {
         </div>
       </template>
     </section>
+
+    <div class="export-root" aria-hidden="true">
+      <article ref="coverExportRef" class="card cover-card" :style="[coverCardStyle, { width: `${previewCardWidth}px` }]">
+        <div class="cover-text-stack">
+          <div
+            v-if="coverDisplay.title"
+            class="cover-title"
+            :style="[coverTextStyle('title'), coverSpacingStyle('title')]"
+          >
+            {{ coverData.title }}
+          </div>
+          <div
+            v-if="coverDisplay.author"
+            class="cover-author"
+            :style="[coverTextStyle('author'), coverSpacingStyle('author')]"
+          >
+            {{ coverData.author }}
+          </div>
+          <div
+            v-if="coverDisplay.subtitle"
+            class="cover-subtitle"
+            :style="[coverTextStyle('subtitle'), coverSpacingStyle('subtitle')]"
+          >
+            {{ coverData.subtitle }}
+          </div>
+
+          <div
+            v-if="coverDisplay.quote"
+            class="cover-quote"
+            :style="[coverTextStyle('quote'), coverSpacingStyle('quote')]"
+          >
+            <p>{{ coverData.quote }}</p>
+          </div>
+        </div>
+      </article>
+    </div>
 
     <div class="measure-root" aria-hidden="true">
       <article class="card measure-card" :class="`card--${templateId}`" :style="[cardStyle, { width: `${previewCardWidth}px` }]">
