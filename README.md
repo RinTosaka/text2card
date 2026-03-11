@@ -36,6 +36,12 @@ npm run build
 npm run preview
 ```
 
+## Cloudflare Pages 部署
+
+1. 连接仓库到 Cloudflare Pages
+2. 构建命令：`npm run build`
+3. 构建输出目录：`dist`
+
 ## 使用说明
 
 ### 1. 基础流程
