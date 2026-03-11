@@ -257,9 +257,14 @@ input[type="checkbox"] {
 
 .color-input {
     display: grid;
-    grid-template-columns: auto 1fr;
+    grid-template-columns: 52px minmax(0, 1fr);
     gap: 8px;
     align-items: center;
+}
+
+.color-input input[type="text"] {
+    min-width: 0;
+    width: 100%;
 }
 
 .stat-box {
