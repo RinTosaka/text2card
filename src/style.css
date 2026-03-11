@@ -253,6 +253,12 @@ input[type="checkbox"] {
 
 .template-manager {
     margin-top: 10px;
+    padding: 8px;
+    border-radius: 12px;
+    transition:
+        background 0.2s ease,
+        box-shadow 0.2s ease,
+        transform 0.2s ease;
 }
 
 .template-row {
@@ -262,10 +268,69 @@ input[type="checkbox"] {
     align-items: center;
 }
 
+.template-row .btn {
+    transition:
+        transform 0.15s ease,
+        box-shadow 0.2s ease,
+        filter 0.2s ease;
+}
+
+.template-row .btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(31, 63, 102, 0.12);
+}
+
+.template-row .btn:active:not(:disabled) {
+    transform: translateY(0) scale(0.98);
+    box-shadow: 0 2px 8px rgba(31, 63, 102, 0.1);
+}
+
 .template-row input,
 .template-row select {
     flex: 1 1 220px;
     min-width: 0;
+}
+
+.template-manager.template-action-save,
+.template-manager.template-action-update,
+.template-manager.template-action-load,
+.template-manager.template-action-delete {
+    animation: templatePulse 0.52s ease;
+}
+
+.template-manager.template-action-save {
+    background: rgba(84, 156, 93, 0.08);
+    box-shadow: 0 0 0 1px rgba(84, 156, 93, 0.18);
+}
+
+.template-manager.template-action-update {
+    background: rgba(52, 120, 182, 0.08);
+    box-shadow: 0 0 0 1px rgba(52, 120, 182, 0.18);
+}
+
+.template-manager.template-action-load {
+    background: rgba(84, 156, 150, 0.08);
+    box-shadow: 0 0 0 1px rgba(84, 156, 150, 0.18);
+}
+
+.template-manager.template-action-delete {
+    background: rgba(176, 62, 62, 0.08);
+    box-shadow: 0 0 0 1px rgba(176, 62, 62, 0.2);
+}
+
+@keyframes templatePulse {
+    0% {
+        transform: scale(0.995);
+        box-shadow: 0 0 0 0 rgba(31, 63, 102, 0.16);
+    }
+    50% {
+        transform: scale(1);
+        box-shadow: 0 6px 18px rgba(31, 63, 102, 0.12);
+    }
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(31, 63, 102, 0.12);
+    }
 }
 
 .inline-top-gap {

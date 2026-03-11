@@ -216,6 +216,8 @@ const templateId = ref('clean')
 const userTemplates = ref([])
 const userTemplateName = ref('')
 const activeUserTemplateId = ref('')
+const templateAction = ref('')
+let templateActionTimer = null
 
 const display = reactive({
   icon: true,
@@ -233,7 +235,7 @@ const cardData = reactive({
   headerLeft: '经典句子摘抄',
   headerRight: 'Classic Quote Extraction',
   content: '在左侧输入文案，快速生成用于分享的卡片内容。',
-  author: '@Text2Card',
+  author: '@唯有期',
   time: formatNow(),
   watermark: 'TEXT2CARD',
 })
@@ -1096,6 +1098,11 @@ onMounted(() => {
   
   userTemplates.value = readUserTemplates()
 
+  const defaultTemplate = cardTemplates.find((item) => item.id === 'clean')
+  if (defaultTemplate) {
+    loadCardTemplate(defaultTemplate)
+  }
+
 
   if (window.ResizeObserver && previewFrameRef.value) {
     resizeObserver = new ResizeObserver(() => {
@@ -1108,6 +1115,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   if (repaginateTimer) clearTimeout(repaginateTimer)
+  if (templateActionTimer) clearTimeout(templateActionTimer)
   if (handleWindowResize) window.removeEventListener('resize', handleWindowResize)
   
   if (resizeObserver) resizeObserver.disconnect()
@@ -1141,7 +1149,7 @@ function resetAll() {
   cardData.headerRight = 'Classic Quote Extraction'
   cardData.content = '在左侧输入文案，快速生成用于分享的卡片内容。'
   contentBlocks.value = [cardData.content]
-  cardData.author = '@Text2Card'
+  cardData.author = '@唯有期'
   cardData.time = formatNow()
   cardData.watermark = 'TEXT2CARD'
 
@@ -1279,6 +1287,14 @@ function persistUserTemplates(list) {
   }
 }
 
+function triggerTemplateAction(type) {
+  templateAction.value = type
+  if (templateActionTimer) clearTimeout(templateActionTimer)
+  templateActionTimer = setTimeout(() => {
+    templateAction.value = ''
+  }, 520)
+}
+
 function saveUserTemplate() {
   const name = userTemplateName.value.trim()
   if (!name) {
@@ -1302,6 +1318,7 @@ function saveUserTemplate() {
   activeUserTemplateId.value = item.id
   userTemplateName.value = ''
   persistUserTemplates(next)
+  triggerTemplateAction('save')
 }
 
 function updateUserTemplate() {
@@ -1333,6 +1350,7 @@ function updateUserTemplate() {
   })
   userTemplates.value = next
   persistUserTemplates(next)
+  triggerTemplateAction('update')
 }
 
 function loadUserTemplate() {
@@ -1343,6 +1361,7 @@ function loadUserTemplate() {
     return
   }
   applyConfigSnapshot({ payload: found.payload })
+  triggerTemplateAction('load')
 }
 
 function deleteUserTemplate() {
@@ -1354,6 +1373,7 @@ function deleteUserTemplate() {
   userTemplates.value = next
   activeUserTemplateId.value = ''
   persistUserTemplates(next)
+  triggerTemplateAction('delete')
 }
 
 watch(
@@ -1432,7 +1452,7 @@ function applyConfigSnapshot(raw) {
   cardData.headerRight = pickString(data?.cardData?.headerRight, 'Classic Quote Extraction')
   cardData.content = pickString(data?.cardData?.content, '在左侧输入文案，快速生成用于分享的卡片内容。')
   contentBlocks.value = [cardData.content]
-  cardData.author = pickString(data?.cardData?.author, '@Text2Card')
+  cardData.author = pickString(data?.cardData?.author, '@唯有期')
   cardData.time = pickString(data?.cardData?.time, formatNow())
   cardData.watermark = pickString(data?.cardData?.watermark, 'TEXT2CARD')
 
@@ -1817,11 +1837,11 @@ async function downloadAllPages() {
             {{ item.name }}
           </button>
         </div>
-        <div class="template-manager">
+        <div class="template-manager" :class="templateAction ? `template-action-${templateAction}` : ''">
           <label class="field">
             <span>保存当前配置为模板</span>
             <div class="template-row">
-              <input v-model="userTemplateName" type="text" maxlength="40" placeholder="例如：小红书-柔和风" />
+              <input v-model="userTemplateName" type="text" maxlength="40" placeholder="例如：小红书-简约风" />
               <button type="button" class="btn ghost mini" @click="saveUserTemplate">保存</button>
               <button
                 type="button"

@@ -14,8 +14,8 @@
     "display": {
       "icon": true,
       "headerLeft": true,
-      "headerRight": true,
-      "headerLine": true,
+      "headerRight": false,
+      "headerLine": false,
       "author": true,
       "time": true,
       "page": true,
@@ -23,10 +23,10 @@
     },
     "cardData": {
       "icon": "✦",
-      "headerLeft": "经典句子摘抄",
-      "headerRight": "Classic Quote Extraction",
-      "content": "在左侧输入文案，快速生成用于分享的卡片内容。",
-      "author": "@Text2Card",
+      "headerLeft": "温一壶月光下酒",
+      "headerRight": "",
+      "content": "夜色极清，秋风掠过屋檐，发出极其轻微的叹息。这尘世的喧嚣，到了此刻，终于像落入水中的尘埃，缓缓沉淀到了河底。我点起红泥小火炉，看着那一星微红的炭火在暗夜里明灭。壶中的水沸了，咕噜噜地响着，带着一种温暖而妥帖的烟火气。天上那轮圆月，正将澄明如水的清辉，丝丝缕缕地倾注进我的白瓷杯里。",
+      "author": "@唯有期",
       "time": "",
       "watermark": "TEXT2CARD"
     },
@@ -52,7 +52,7 @@
     },
     "fontSizeConfig": {
       "icon": 28,
-      "headerLeft": 20,
+      "headerLeft": 27,
       "headerRight": 16,
       "body": 24,
       "author": 16,
@@ -61,7 +61,7 @@
       "watermark": 20
     },
     "themeMode": "preset",
-    "presetThemeId": "sunrise",
+    "presetThemeId": "forest",
     "usePresetTextColor": true,
     "customTextColor": "#1d2430",
     "solidColor": "#f3eee4",
@@ -82,10 +82,10 @@
       "opacity": 0.28
     },
     "coverData": {
-      "title": "《我与地坛》",
-      "author": "作者：史铁生",
-      "subtitle": "经典句子摘抄",
-      "quote": "在满园弥漫的沉静光芒中，一个人更容易看到时间，并看见自己的身影。"
+      "title": "《温一壶月光下酒》",
+      "author": "唯有期",
+      "subtitle": "",
+      "quote": "夜色极清，秋风掠过屋檐，发出极其轻微的叹息。\n这尘世的喧嚣，到了此刻，终于像落入水中的尘埃，缓缓沉淀到了河底。"
     },
     "coverFontFamilyConfig": {
       "title": "nd-zh-huiwen-mingchao",
@@ -97,7 +97,7 @@
       "title": 55,
       "author": 30,
       "subtitle": 27,
-      "quote": 35
+      "quote": 30
     },
     "coverSpacing": {
       "title": 150,
@@ -111,7 +111,7 @@
       "subtitle": true,
       "quote": true
     },
-    "coverAlign": "center",
+    "coverAlign": "left",
     "coverPadding": 80
   }
 }
