@@ -1,0 +1,117 @@
+{
+  "version": 1,
+  "savedAt": "2026-03-11T04:31:01.484Z",
+  "payload": {
+    "selectedFontCategory": "all",
+    "sizePresetId": "xhs",
+    "sizeControl": {
+      "width": 1080,
+      "height": 1440
+    },
+    "aspectRatioLocked": true,
+    "lockedAspectRatio": 0.75,
+    "templateId": "quote-extraction",
+    "display": {
+      "icon": true,
+      "headerLeft": true,
+      "headerRight": true,
+      "headerLine": true,
+      "author": true,
+      "time": false,
+      "page": true,
+      "watermark": false
+    },
+    "cardData": {
+      "icon": "✦",
+      "headerLeft": "经典句子摘抄",
+      "headerRight": "Classic Quote Extraction",
+      "content": "要是有些事我没说，地坛，你别以为是我忘了，我什么也没忘，但是有些事只适合收藏。不能说，也不能想，却又不能忘。它们不能变成语言，它们无法变成语言，一旦变成语言就不再是它们了。它们是一片朦胧的温馨与寂寥，是一片成熟的希望与绝望，它们的领地只有两处：心与坟墓。 ",
+      "author": "@Text2Card",
+      "time": "2026-03-10 23:14",
+      "watermark": "TEXT2CARD"
+    },
+    "typography": {
+      "align": "left",
+      "lineHeight": 1.5,
+      "padding": 50,
+      "radius": 28
+    },
+    "headerLineStyle": {
+      "type": "solid",
+      "thickness": 1
+    },
+    "fontFamilyConfig": {
+      "icon": "nd-zh-huiwen-mingchao",
+      "headerLeft": "nd-zh-huiwen-mingchao",
+      "headerRight": "nd-zh-huiwen-mingchao",
+      "body": "nd-zh-huiwen-mingchao",
+      "author": "nd-zh-huiwen-mingchao",
+      "time": "nd-zh-huiwen-mingchao",
+      "page": "nd-zh-huiwen-mingchao",
+      "watermark": "nd-zh-huiwen-mingchao"
+    },
+    "fontSizeConfig": {
+      "icon": 28,
+      "headerLeft": 20,
+      "headerRight": 16,
+      "body": 35,
+      "author": 16,
+      "time": 15,
+      "page": 15,
+      "watermark": 20
+    },
+    "themeMode": "image",
+    "presetThemeId": "sunrise",
+    "usePresetTextColor": true,
+    "customTextColor": "#0a3273",
+    "solidColor": "#f3eee4",
+    "gradientStart": "#f7d4c3",
+    "gradientEnd": "#f1a58f",
+    "gradientAngle": 140,
+    "imageUrl": "/bgImages/卡纸02.jpg",
+    "imageOverlay": 0,
+    "imageOverlayColor": "#000000",
+    "watermarkOpacity": 0.12,
+    "shadow": {
+      "enabled": true,
+      "x": 0,
+      "y": 16,
+      "blur": 40,
+      "spread": 0,
+      "color": "#121a2a",
+      "opacity": 0.28
+    },
+    "coverData": {
+      "title": "《我与地坛》",
+      "author": "作者：史铁生",
+      "subtitle": "经典句子摘抄",
+      "quote": "在满园弥漫的沉静光芒中，一个人更容易看到时间，并看见自己的身影。"
+    },
+    "coverFontFamilyConfig": {
+      "title": "nd-zh-huiwen-mingchao",
+      "author": "nd-zh-huiwen-mingchao",
+      "subtitle": "nd-zh-huiwen-mingchao",
+      "quote": "nd-zh-huiwen-mingchao"
+    },
+    "coverFontSizeConfig": {
+      "title": 55,
+      "author": 30,
+      "subtitle": 27,
+      "quote": 35
+    },
+    "coverSpacing": {
+      "title": 150,
+      "author": 0,
+      "subtitle": 0,
+      "quote": 150
+    },
+    "coverDisplay": {
+      "title": true,
+      "author": true,
+      "subtitle": true,
+      "quote": true
+    },
+    "coverAlign": "center",
+    "coverPadding": 80
+  }
+}

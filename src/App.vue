@@ -21,9 +21,11 @@ const sizePresets = [
 ]
 
 const cardTemplates = [
-  { id: 'clean', name: '简约' },
-  { id: 'handwriting', name: '手写' },
+  { id: 'clean', name: '简约', configUrl: '/template/Clean.json' },
+  { id: 'quote-extraction', name: '摘抄', configUrl: '/template/Quote_Extraction.json' },
 ]
+
+const USER_TEMPLATE_KEY = 'text2card-user-templates'
 
 const themePresets = [
   {
@@ -201,6 +203,7 @@ const bulkDownloadMode = ref('zip')
 const selectedFontCategory = ref('all')
 const uploadedFontOptions = ref([])
 const uploadedFontObjectUrls = ref([])
+const cardTemplateCache = ref({})
 
 const panelTab = ref('common')
 
@@ -210,6 +213,9 @@ const aspectRatioLocked = ref(true)
 const lockedAspectRatio = ref(1)
 
 const templateId = ref('clean')
+const userTemplates = ref([])
+const userTemplateName = ref('')
+const activeUserTemplateId = ref('')
 
 const display = reactive({
   icon: true,
@@ -252,14 +258,14 @@ const coverFontSizeConfig = reactive({
   title: 55,
   author: 30,
   subtitle: 27,
-  quote: 27,
+  quote: 35,
 })
 
-const coverOffsets = reactive({
-  title: { x: 0, y: 0 },
-  author: { x: 0, y: 0 },
-  subtitle: { x: 0, y: 0 },
-  quote: { x: 0, y: 0 },
+const coverSpacing = reactive({
+  title: 150,
+  author: 0,
+  subtitle: 0,
+  quote: 150,
 })
 
 const coverDisplay = reactive({
@@ -269,13 +275,8 @@ const coverDisplay = reactive({
   quote: true,
 })
 
-const activeCoverDragKey = ref('')
-const coverDragState = reactive({
-  startX: 0,
-  startY: 0,
-  originX: 0,
-  originY: 0,
-})
+const coverAlign = ref('center')
+const coverPadding = ref(80)
 
 const typography = reactive({
   align: 'left',
@@ -454,6 +455,12 @@ const cardStyle = computed(() => ({
   '--sticky-step': `${Math.max(20, Math.round(fontSizeConfig.body * typography.lineHeight))}px`,
   textAlign: typography.align,
   aspectRatio: `${currentSize.value.width} / ${currentSize.value.height}`,
+}))
+
+const coverCardStyle = computed(() => ({
+  ...cardStyle.value,
+  '--card-padding': `${coverPadding.value}px`,
+  textAlign: coverAlign.value,
 }))
 
 function simplifyRatio(width, height) {
@@ -1086,8 +1093,9 @@ onMounted(() => {
   }
 
   window.addEventListener('resize', handleWindowResize)
-  window.addEventListener('pointermove', handleCoverDragMove)
-  window.addEventListener('pointerup', stopCoverDrag)
+  
+  userTemplates.value = readUserTemplates()
+
 
   if (window.ResizeObserver && previewFrameRef.value) {
     resizeObserver = new ResizeObserver(() => {
@@ -1101,8 +1109,7 @@ onMounted(() => {
 onBeforeUnmount(() => {
   if (repaginateTimer) clearTimeout(repaginateTimer)
   if (handleWindowResize) window.removeEventListener('resize', handleWindowResize)
-  window.removeEventListener('pointermove', handleCoverDragMove)
-  window.removeEventListener('pointerup', stopCoverDrag)
+  
   if (resizeObserver) resizeObserver.disconnect()
   for (let i = 0; i < uploadedFontObjectUrls.value.length; i += 1) {
     URL.revokeObjectURL(uploadedFontObjectUrls.value[i])
@@ -1194,12 +1201,19 @@ function resetAll() {
   coverFontSizeConfig.title = 55
   coverFontSizeConfig.author = 30
   coverFontSizeConfig.subtitle = 27
-  coverFontSizeConfig.quote = 27
+  coverFontSizeConfig.quote = 35
 
   coverDisplay.title = true
   coverDisplay.author = true
   coverDisplay.subtitle = true
   coverDisplay.quote = true
+
+  coverAlign.value = 'center'
+  coverPadding.value = 80
+  coverSpacing.title = 150
+  coverSpacing.author = 0
+  coverSpacing.subtitle = 0
+  coverSpacing.quote = 150
 }
 
 function buildConfigSnapshot() {
@@ -1235,11 +1249,124 @@ function buildConfigSnapshot() {
       coverData: { ...coverData },
       coverFontFamilyConfig: { ...coverFontFamilyConfig },
       coverFontSizeConfig: { ...coverFontSizeConfig },
-      coverOffsets: JSON.parse(JSON.stringify(coverOffsets)),
+      coverSpacing: { ...coverSpacing },
       coverDisplay: { ...coverDisplay },
+      coverAlign: coverAlign.value,
+      coverPadding: coverPadding.value,
     },
   }
 }
+
+function readUserTemplates() {
+  try {
+    const raw = localStorage.getItem(USER_TEMPLATE_KEY)
+    if (!raw) return []
+    const parsed = JSON.parse(raw)
+    if (!Array.isArray(parsed)) return []
+    return parsed.filter((item) => item && typeof item === 'object' && item.id && item.payload)
+  } catch (error) {
+    console.error(error)
+    return []
+  }
+}
+
+function persistUserTemplates(list) {
+  try {
+    localStorage.setItem(USER_TEMPLATE_KEY, JSON.stringify(list))
+  } catch (error) {
+    console.error(error)
+    window.alert('模板保存失败，请检查浏览器存储空间。')
+  }
+}
+
+function saveUserTemplate() {
+  const name = userTemplateName.value.trim()
+  if (!name) {
+    window.alert('请输入模板名称。')
+    return
+  }
+  const duplicated = userTemplates.value.some((item) => item.name === name)
+  if (duplicated) {
+    window.alert('模板名称已存在，请更换名称。')
+    return
+  }
+  const snapshot = buildConfigSnapshot()
+  const item = {
+    id: `${Date.now()}-${Math.random().toString(16).slice(2, 8)}`,
+    name,
+    savedAt: new Date().toISOString(),
+    payload: snapshot.payload,
+  }
+  const next = [item, ...userTemplates.value]
+  userTemplates.value = next
+  activeUserTemplateId.value = item.id
+  userTemplateName.value = ''
+  persistUserTemplates(next)
+}
+
+function updateUserTemplate() {
+  const targetId = activeUserTemplateId.value
+  const found = userTemplates.value.find((item) => item.id === targetId)
+  if (!found) {
+    window.alert('请先选择需要编辑的模板。')
+    return
+  }
+  const name = userTemplateName.value.trim()
+  if (!name) {
+    window.alert('请输入模板名称。')
+    return
+  }
+  const duplicated = userTemplates.value.some((item) => item.id !== targetId && item.name === name)
+  if (duplicated) {
+    window.alert('模板名称已存在，请更换名称。')
+    return
+  }
+  const snapshot = buildConfigSnapshot()
+  const next = userTemplates.value.map((item) => {
+    if (item.id !== targetId) return item
+    return {
+      ...item,
+      name,
+      savedAt: new Date().toISOString(),
+      payload: snapshot.payload,
+    }
+  })
+  userTemplates.value = next
+  persistUserTemplates(next)
+}
+
+function loadUserTemplate() {
+  const targetId = activeUserTemplateId.value
+  const found = userTemplates.value.find((item) => item.id === targetId)
+  if (!found) {
+    window.alert('未找到对应模板。')
+    return
+  }
+  applyConfigSnapshot({ payload: found.payload })
+}
+
+function deleteUserTemplate() {
+  const targetId = activeUserTemplateId.value
+  const found = userTemplates.value.find((item) => item.id === targetId)
+  if (!found) return
+  if (!window.confirm(`确定删除模板「${found.name}」？`)) return
+  const next = userTemplates.value.filter((item) => item.id !== targetId)
+  userTemplates.value = next
+  activeUserTemplateId.value = ''
+  persistUserTemplates(next)
+}
+
+watch(
+  () => activeUserTemplateId.value,
+  (value) => {
+    if (!value) {
+      userTemplateName.value = ''
+      return
+    }
+    const found = userTemplates.value.find((item) => item.id === value)
+    userTemplateName.value = found?.name || ''
+  },
+)
 
 function pickNumber(value, fallback) {
   const num = Number(value)
@@ -1380,14 +1507,38 @@ function applyConfigSnapshot(raw) {
   coverDisplay.subtitle = pickBoolean(data?.coverDisplay?.subtitle, true)
   coverDisplay.quote = pickBoolean(data?.coverDisplay?.quote, true)
 
-  coverOffsets.title.x = pickNumber(data?.coverOffsets?.title?.x, coverOffsets.title.x)
-  coverOffsets.title.y = pickNumber(data?.coverOffsets?.title?.y, coverOffsets.title.y)
-  coverOffsets.author.x = pickNumber(data?.coverOffsets?.author?.x, coverOffsets.author.x)
-  coverOffsets.author.y = pickNumber(data?.coverOffsets?.author?.y, coverOffsets.author.y)
-  coverOffsets.subtitle.x = pickNumber(data?.coverOffsets?.subtitle?.x, coverOffsets.subtitle.x)
-  coverOffsets.subtitle.y = pickNumber(data?.coverOffsets?.subtitle?.y, coverOffsets.subtitle.y)
-  coverOffsets.quote.x = pickNumber(data?.coverOffsets?.quote?.x, coverOffsets.quote.x)
-  coverOffsets.quote.y = pickNumber(data?.coverOffsets?.quote?.y, coverOffsets.quote.y)
+  coverAlign.value = pickEnum(data?.coverAlign, ['left', 'center', 'right'], 'center')
+  coverPadding.value = pickNumber(data?.coverPadding, 60)
+
+  coverSpacing.title = pickNumber(data?.coverSpacing?.title, coverSpacing.title)
+  coverSpacing.author = pickNumber(data?.coverSpacing?.author, coverSpacing.author)
+  coverSpacing.subtitle = pickNumber(data?.coverSpacing?.subtitle, coverSpacing.subtitle)
+  coverSpacing.quote = pickNumber(data?.coverSpacing?.quote, coverSpacing.quote)
+}
+
+async function loadCardTemplate(item) {
+  if (!item?.configUrl) return
+  try {
+    if (!cardTemplateCache.value[item.configUrl]) {
+      const response = await fetch(item.configUrl, { cache: 'no-store' })
+      if (!response.ok) throw new Error('template fetch failed')
+      cardTemplateCache.value[item.configUrl] = await response.json()
+    }
+    applyConfigSnapshot(cardTemplateCache.value[item.configUrl])
+    templateId.value = item.id
+  } catch (error) {
+    console.error(error)
+    window.alert('模板加载失败，请稍后重试。')
+  }
+}
+
+function applyCardTemplate(item) {
+  if (!item) return
+  if (item.configUrl) {
+    loadCardTemplate(item)
+    return
+  }
+  templateId.value = item.id
 }
 
 function saveConfig() {
@@ -1431,10 +1582,10 @@ function coverTextStyle(key) {
   }
 }
 
-function coverTransformStyle(key) {
-  const offset = coverOffsets[key] || { x: 0, y: 0 }
+function coverSpacingStyle(key) {
+  const value = Number(coverSpacing[key]) || 0
   return {
-    transform: `translate(${offset.x}px, ${offset.y}px)`,
+    marginTop: `${value}px`,
   }
 }
 
@@ -1449,28 +1600,10 @@ function headerLineInlineStyle() {
   }
 }
 
-function startCoverDrag(key, event) {
-  if (!key || !coverOffsets[key]) return
-  event.preventDefault()
-  activeCoverDragKey.value = key
-  coverDragState.startX = event.clientX
-  coverDragState.startY = event.clientY
-  coverDragState.originX = coverOffsets[key].x
-  coverDragState.originY = coverOffsets[key].y
-}
 
-function handleCoverDragMove(event) {
-  const key = activeCoverDragKey.value
-  if (!key || !coverOffsets[key]) return
-  const deltaX = event.clientX - coverDragState.startX
-  const deltaY = event.clientY - coverDragState.startY
-  coverOffsets[key].x = Math.round(coverDragState.originX + deltaX)
-  coverOffsets[key].y = Math.round(coverDragState.originY + deltaY)
-}
-
-function stopCoverDrag() {
-  if (!activeCoverDragKey.value) return
-  activeCoverDragKey.value = ''
+function setCoverAlign(nextAlign) {
+  if (!['left', 'center', 'right'].includes(nextAlign)) return
+  coverAlign.value = nextAlign
 }
 
 async function downloadCoverCard() {
@@ -1679,10 +1812,48 @@ async function downloadAllPages() {
             type="button"
             class="chip"
             :class="{ active: templateId === item.id }"
-            @click="templateId = item.id"
+            @click="applyCardTemplate(item)"
           >
             {{ item.name }}
           </button>
+        </div>
+        <div class="template-manager">
+          <label class="field">
+            <span>保存当前配置为模板</span>
+            <div class="template-row">
+              <input v-model="userTemplateName" type="text" maxlength="40" placeholder="例如：小红书-柔和风" />
+              <button type="button" class="btn ghost mini" @click="saveUserTemplate">保存</button>
+              <button
+                type="button"
+                class="btn ghost mini"
+                :disabled="!activeUserTemplateId"
+                @click="updateUserTemplate"
+              >
+                更新
+              </button>
+            </div>
+          </label>
+          <label class="field">
+            <span>我的模板</span>
+            <div class="template-row">
+              <select v-model="activeUserTemplateId">
+                <option value="">请选择模板</option>
+                <option v-for="item in userTemplates" :key="item.id" :value="item.id">
+                  {{ item.name }}
+                </option>
+              </select>
+              <button type="button" class="btn ghost mini" :disabled="!activeUserTemplateId" @click="loadUserTemplate">加载</button>
+              <button
+                type="button"
+                class="btn ghost mini danger"
+                :disabled="!activeUserTemplateId"
+                @click="deleteUserTemplate"
+              >
+                删除
+              </button>
+            </div>
+            <small class="field-hint">模板保存在浏览器本地存储，仅当前浏览器可用。</small>
+          </label>
         </div>
       </section>
 
@@ -1995,10 +2166,47 @@ async function downloadAllPages() {
         </section>
 
         <section class="section-block">
+          <h2>封面布局</h2>
+          <div class="stat-box">
+            <span>水平对齐用按钮切换</span>
+            <span>留白控制整体内边距，间距通过 margin 调整</span>
+          </div>
+          <div class="chips">
+            <button type="button" class="chip" :class="{ active: coverAlign === 'left' }" @click="setCoverAlign('left')">靠左</button>
+            <button type="button" class="chip" :class="{ active: coverAlign === 'center' }" @click="setCoverAlign('center')">居中</button>
+            <button type="button" class="chip" :class="{ active: coverAlign === 'right' }" @click="setCoverAlign('right')">靠右</button>
+          </div>
+          <label class="field">
+            <span class="range-head"><span>卡片留白</span><strong>{{ coverPadding }}px</strong></span>
+            <input v-model.number="coverPadding" type="range" min="50" max="200" step="2" />
+          </label>
+          <div class="grid-fields">
+            <label class="field">
+              <span class="range-head"><span>标题间距</span><strong>{{ coverSpacing.title }}px</strong></span>
+              <input v-model.number="coverSpacing.title" type="range" min="0" max="200" step="1" />
+            </label>
+            <label class="field">
+              <span class="range-head"><span>作者间距</span><strong>{{ coverSpacing.author }}px</strong></span>
+              <input v-model.number="coverSpacing.author" type="range" min="0" max="200" step="1" />
+            </label>
+          </div>
+          <div class="grid-fields">
+            <label class="field">
+              <span class="range-head"><span>副标题间距</span><strong>{{ coverSpacing.subtitle }}px</strong></span>
+              <input v-model.number="coverSpacing.subtitle" type="range" min="0" max="300" step="1" />
+            </label>
+            <label class="field">
+              <span class="range-head"><span>引用句间距</span><strong>{{ coverSpacing.quote }}px</strong></span>
+              <input v-model.number="coverSpacing.quote" type="range" min="0" max="300" step="1" />
+            </label>
+          </div>
+        </section>
+
+        <section class="section-block">
           <h2>封面排版</h2>
           <div class="stat-box">
-            <span>拖动标题/作者/副标题/引用句可调整位置</span>
-            <span>位置基于居中布局偏移，分隔线可独立拖动</span>
+            <span>拖动标题/作者/副标题/引用句可调整垂直位置</span>
+            <span>水平对齐通过按钮切换</span>
           </div>
           <div class="toggle-grid cover-toggle-grid">
             <label class="toggle-row"><input v-model="coverDisplay.title" type="checkbox" /> 显示标题</label>
@@ -2083,6 +2291,9 @@ async function downloadAllPages() {
             <option value="separate">逐张下载</option>
           </select>
         </label>
+        <button class="btn ghost mini" type="button" :disabled="isExporting" @click="downloadCoverCard">
+          下载封面
+        </button>
         <button class="btn primary mini" type="button" :disabled="isExporting || totalPages < 1" @click="downloadAllPages">
           <span class="download-icon">⬇</span>
           {{ isExporting ? '下载中...' : '下载全部' }}
@@ -2167,38 +2378,34 @@ async function downloadAllPages() {
           <div class="preview-stack">
             <section class="page-panel">
               <div class="preview-card-shell">
-                <article ref="coverCardRef" class="card cover-card" :style="[cardStyle, { width: `${previewCardWidth}px` }]">
+                <article ref="coverCardRef" class="card cover-card" :style="[coverCardStyle, { width: `${previewCardWidth}px` }]">
                   <div class="cover-text-stack">
                     <div
                       v-if="coverDisplay.title"
-                      class="cover-title cover-draggable"
-                      :style="[coverTextStyle('title'), coverTransformStyle('title')]"
-                      @pointerdown="startCoverDrag('title', $event)"
+                      class="cover-title"
+                      :style="[coverTextStyle('title'), coverSpacingStyle('title')]"
                     >
                       {{ coverData.title }}
                     </div>
                     <div
                       v-if="coverDisplay.author"
-                      class="cover-author cover-draggable"
-                      :style="[coverTextStyle('author'), coverTransformStyle('author')]"
-                      @pointerdown="startCoverDrag('author', $event)"
+                      class="cover-author"
+                      :style="[coverTextStyle('author'), coverSpacingStyle('author')]"
                     >
                       {{ coverData.author }}
                     </div>
                     <div
                       v-if="coverDisplay.subtitle"
-                      class="cover-subtitle cover-draggable"
-                      :style="[coverTextStyle('subtitle'), coverTransformStyle('subtitle')]"
-                      @pointerdown="startCoverDrag('subtitle', $event)"
+                      class="cover-subtitle"
+                      :style="[coverTextStyle('subtitle'), coverSpacingStyle('subtitle')]"
                     >
                       {{ coverData.subtitle }}
                     </div>
 
                     <div
                       v-if="coverDisplay.quote"
-                      class="cover-quote cover-draggable"
-                      :style="[coverTextStyle('quote'), coverTransformStyle('quote')]"
-                      @pointerdown="startCoverDrag('quote', $event)"
+                      class="cover-quote"
+                      :style="[coverTextStyle('quote'), coverSpacingStyle('quote')]"
                     >
                       <p>{{ coverData.quote }}</p>
                     </div>

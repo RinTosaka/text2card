@@ -251,6 +251,23 @@ input[type="checkbox"] {
     flex-wrap: wrap;
 }
 
+.template-manager {
+    margin-top: 10px;
+}
+
+.template-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.template-row input,
+.template-row select {
+    flex: 1 1 220px;
+    min-width: 0;
+}
+
 .inline-top-gap {
     margin-top: 8px;
 }
@@ -395,6 +412,11 @@ input[type="checkbox"] {
     color: #2f4658;
 }
 
+.btn.ghost.danger {
+    background: #f4e1e1;
+    color: #7a1f1f;
+}
+
 .btn.ghost:disabled {
     opacity: 0.55;
     cursor: not-allowed;
@@ -417,7 +439,6 @@ input[type="checkbox"] {
         linear-gradient(145deg, #f6f1e8 0%, #efe7dc 50%, #e7ddcf 100%);
     color: var(--card-text);
     font-family: 'Noto Serif SC', 'Source Han Serif SC', 'Songti SC', serif;
-    text-align: center;
     align-items: center;
 }
 
@@ -453,11 +474,6 @@ input[type="checkbox"] {
     opacity: 0.85;
 }
 
-
-.cover-draggable {
-    cursor: move;
-    touch-action: none;
-}
 
 .preview-section {
     min-height: calc(100vh - 36px);
@@ -739,19 +755,6 @@ input[type="checkbox"] {
     padding: 3px 8px;
     border-radius: 8px;
     background: rgba(255, 255, 255, 0.2);
-}
-
-.card--handwriting {
-    transform: rotate(-0.8deg);
-    border: 2px dashed rgba(66, 41, 26, 0.35);
-}
-
-.card--handwriting .card-title {
-    letter-spacing: 0.04em;
-}
-
-.card--handwriting .card-content {
-    letter-spacing: 0.015em;
 }
 
 .card--code {
