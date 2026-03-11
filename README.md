@@ -15,6 +15,10 @@
 - 导出：单页下载、批量下载、ZIP 打包（含封面与当前配置）
 - 用户模板：保存 / 更新 / 加载 / 删除（本地存储）
 
+## 案例展示
+
+- [小红书案例展示](https://www.xiaohongshu.com/explore/69b0340900000000220396f5?xsec_token=YBUs7Xgo9FStHrpxhskKkS2geB1Soe0tr1UadsU7lTMWE)
+
 ## 本地开发
 
 安装依赖：
@@ -38,9 +42,56 @@ npm run preview
 
 ## Cloudflare Pages 部署
 
-1. 连接仓库到 Cloudflare Pages
-2. 构建命令：`npm run build`
-3. 构建输出目录：`dist`
+### 📂 第一步：Fork 项目
+
+1. 访问 [text2card 项目](https://github.com/RinTosaka/text2card)
+2. 点击右上角的 "Fork" 按钮
+3. 选择您的 GitHub 账户
+4. 确认 Fork 完成
+
+### 🏗️ 第二步：创建 Pages 项目
+
+访问 Cloudflare Dashboard
+
+1. 登录 [Cloudflare Dashboard](https://dash.cloudflare.com/)
+
+2. 选择左侧菜单的 "计算和AI" -> "Workers & Pages"
+
+3. 点击 "创建应用程序"
+
+4. 在最下方 `Looking to deploy Pages? `选择 "Get started"
+
+   ![](./images/PixPin_2026-03-11_15-16-38.png)
+
+5. 在 "导入现有 Git 存储库" 处点击 "开始使用"
+
+   ![](./images/PixPin_2026-03-11_15-17-15.png)
+
+6. 连接 GitHub 仓库
+
+   1. 如果首次使用，需要授权 Cloudflare 访问 GitHub
+
+   2. 选择您 Fork 的 `text2card` 仓库
+
+   3. 点击 "开始设置"
+
+      ![](./images/PixPin_2026-03-11_15-18-24.png)
+
+7. 配置项目设置
+
+   | 配置项       | 值                      | 说明         |
+   | :----------- | :---------------------- | :----------- |
+   | 项目名称     | `text2card`（或自定义） | 项目标识符   |
+   | 生产分支     | `main`                  | 生产环境分支 |
+   | 构建命令     | `npm run build`         |              |
+   | 构建输出目录 | `dist`                  |              |
+
+   ![](./images/PixPin_2026-03-11_15-19-06.png)
+
+8. 部署项目
+
+   1. 点击 "保存并部署"
+   2. 等待部署完成
 
 ## 使用说明
 
