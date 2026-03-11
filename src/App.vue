@@ -7,6 +7,7 @@ import { marked } from 'marked'
 
 const MANUAL_BREAK_MARK = '[[page]]'
 const INLINE_STYLE_MARK = '{{文字|color=#ff4d4f;size=28;weight=700}}'
+const BLANK_LINE_TOKEN = 'T2C-BLANK-LINE'
 
 const sizePresets = [
   { id: 'square', name: '正方形', ratioLabel: '1:1', width: 1080, height: 1080 },
@@ -724,17 +725,46 @@ function renderMarkdownInline(text, fallback = '') {
 }
 
 function renderMarkdownBody(text, fallback = '') {
-  const source = String(text || '').trim() ? String(text || '') : fallback
-  const compiled = compileMarkdownInput(source)
+  const rawText = String(text || '')
+  const source = rawText.trim() ? rawText : fallback
+  const compiled = compileMarkdownInput(preserveBlankLines(source))
   try {
     const html = marked.parse(compiled, markdownOptions)
     if (typeof html === 'string' && html.trim()) {
+      const tokenPattern = escapeRegExp(BLANK_LINE_TOKEN)
       return html
+        .replace(new RegExp(`<p>\\s*${tokenPattern}\\s*</p>`, 'g'), '<p class="md-blank">&nbsp;</p>')
+        .replace(new RegExp(`<p>\\s*@@BLANK_LINE@@\\s*</p>`, 'g'), '<p class="md-blank">&nbsp;</p>')
+        .replace(new RegExp(`<p>\\s*@@BLANK-LINE@@\\s*</p>`, 'g'), '<p class="md-blank">&nbsp;</p>')
+        .replace(new RegExp(tokenPattern, 'g'), '')
+        .replace(/@@BLANK_LINE@@/g, '')
+        .replace(/@@BLANK-LINE@@/g, '')
     }
   } catch (error) {
     console.error(error)
   }
   return `<p>${escapeHtml(source)}</p>`
+}
+
+function preserveBlankLines(text) {
+  const lines = String(text || '').replace(/\r\n/g, '\n').split('\n')
+  let inFence = false
+  return lines
+    .map((line) => {
+      const trimmed = line.trim()
+      if (trimmed.startsWith('```') || trimmed.startsWith('~~~')) {
+        inFence = !inFence
+        return line
+      }
+      if (inFence) return line
+      if (trimmed === '' || trimmed === '@@BLANK_LINE@@' || trimmed === '@@BLANK-LINE@@') return BLANK_LINE_TOKEN
+      return line
+    })
+    .join('\n')
+}
+
+function escapeRegExp(value) {
+  return String(value || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
 
 function formatNow() {
@@ -919,6 +949,8 @@ function removeTextBox(index) {
 function normalizeBreakMarks(text) {
   return String(text || '')
     .replace(/\r\n/g, '\n')
+    .replace(/\\n/g, '\n')
+    .replace(/<br\s*\/?>/gi, '\n')
     .replace(/\[\[page\]\]/gi, '\f')
 }
 
