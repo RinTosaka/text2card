@@ -2327,6 +2327,15 @@ async function downloadAllPages() {
       <template v-else>
         <section class="section-block">
           <h2>正文内容</h2>
+          <div class="stat-box">
+            <span>正文水平对齐</span>
+            <span>影响所有正文页</span>
+          </div>
+          <div class="chips">
+            <button type="button" class="chip" :class="{ active: typography.align === 'left' }" @click="typography.align = 'left'">靠左</button>
+            <button type="button" class="chip" :class="{ active: typography.align === 'center' }" @click="typography.align = 'center'">居中</button>
+            <button type="button" class="chip" :class="{ active: typography.align === 'right' }" @click="typography.align = 'right'">靠右</button>
+          </div>
           <div v-for="(block, index) in contentBlocks" :key="`content-block-${index}`">
             <label class="field">
               <span>正文（支持 Markdown，输入 <code>{{ MANUAL_BREAK_MARK }}</code> 可手动分页）</span>
