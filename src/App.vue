@@ -1926,129 +1926,13 @@ async function downloadAllPages() {
       </section>
 
       <section class="section-block">
-        <h2>内容基础</h2>
-        <label class="field">
-          <span>图标</span>
-          <input v-model="cardData.icon" type="text" maxlength="4" />
-          <div class="chips tiny">
-            <button v-for="icon in iconQuickPick" :key="icon" type="button" class="chip" @click="cardData.icon = icon">
-              {{ icon }}
-            </button>
-          </div>
-        </label>
-
-        <label class="field">
-          <span>页眉左（支持 Markdown）</span>
-          <input v-model="cardData.headerLeft" type="text" maxlength="200" />
-          <small class="field-hint">单字样式：<code>{{ INLINE_STYLE_MARK }}</code></small>
-        </label>
-
-        <label class="field">
-          <span>页眉右（支持 Markdown）</span>
-          <input v-model="cardData.headerRight" type="text" maxlength="120" />
-          <small class="field-hint">单字样式：<code>{{ INLINE_STYLE_MARK }}</code></small>
-        </label>
-
-        <div class="field">
-          <span>页眉分隔线</span>
-        </div>
+        <h2>圆角与阴影</h2>
         <div class="grid-fields">
-          <label class="field">
-            <span>线型</span>
-            <select v-model="headerLineStyle.type">
-              <option value="solid">实线</option>
-              <option value="dashed">虚线</option>
-              <option value="dotted">点线</option>
-            </select>
-          </label>
-          <label class="field">
-            <span>线条粗细（px）</span>
-            <input v-model.number="headerLineStyle.thickness" type="number" min="1" max="12" />
-          </label>
-        </div>
-
-        <label class="field">
-          <span>署名</span>
-          <input v-model="cardData.author" type="text" maxlength="48" />
-        </label>
-
-        <label class="field">
-          <span>时间</span>
-          <input v-model="cardData.time" type="text" maxlength="40" />
-        </label>
-        <div class="inline-actions">
-          <button type="button" class="btn ghost mini" @click="setCurrentTime">填充当前时间</button>
-        </div>
-
-        <label class="field">
-          <span>水印</span>
-          <input v-model="cardData.watermark" type="text" maxlength="60" />
-        </label>
-
-        <div class="stat-box">
-          <span>{{ statsText }}</span>
-          <span>总页数自动计算，无需手动输入</span>
-        </div>
-
-        <div class="toggle-grid">
-          <label class="toggle-row"><input v-model="display.icon" type="checkbox" /> 显示图标</label>
-          <label class="toggle-row"><input v-model="display.headerLeft" type="checkbox" /> 显示页眉左</label>
-          <label class="toggle-row"><input v-model="display.headerRight" type="checkbox" /> 显示页眉右</label>
-          <label class="toggle-row"><input v-model="display.headerLine" type="checkbox" /> 显示页眉分隔线</label>
-          <label class="toggle-row"><input v-model="display.author" type="checkbox" /> 显示署名</label>
-          <label class="toggle-row"><input v-model="display.time" type="checkbox" /> 显示时间</label>
-          <label class="toggle-row"><input v-model="display.page" type="checkbox" /> 显示页码</label>
-          <label class="toggle-row"><input v-model="display.watermark" type="checkbox" /> 显示水印</label>
-        </div>
-      </section>
-
-      <section class="section-block">
-        <h2>字体选择（独立控制 + 字号）</h2>
-        <div class="font-tools">
-          <label class="field">
-            <span>上传字体（ttf/otf/woff/woff2）</span>
-            <input type="file" accept=".ttf,.otf,.woff,.woff2,font/ttf,font/otf,font/woff,font/woff2" multiple @change="onFontUpload" />
-          </label>
-        </div>
-        <div class="font-grid">
-          <div v-for="item in fontTargetOptions" :key="item.key" class="font-row">
-            <span class="font-row-label">{{ item.label }}</span>
-            <select v-model="fontFamilyConfig[item.key]">
-              <option v-for="font in getSelectableFontOptions(item.key)" :key="font.id" :value="font.id">
-                {{ font.name }}
-              </option>
-            </select>
-            <input v-model.number="fontSizeConfig[item.key]" type="number" min="10" max="120" />
-          </div>
-        </div>
-      </section>
-
-      <section class="section-block">
-        <h2>版式与阴影</h2>
-        <div class="grid-fields">
-          <label class="field">
-            <span>文字对齐</span>
-            <select v-model="typography.align">
-              <option value="left">左对齐</option>
-              <option value="center">居中</option>
-              <option value="right">右对齐</option>
-            </select>
-          </label>
           <label class="field">
             <span>圆角</span>
             <input v-model.number="typography.radius" type="number" min="0" max="80" />
           </label>
         </div>
-
-        <label class="field">
-          <span class="range-head"><span>正文行距</span><strong>{{ typography.lineHeight.toFixed(2) }}</strong></span>
-          <input v-model.number="typography.lineHeight" type="range" min="1.1" max="2.5" step="0.05" />
-        </label>
-
-        <label class="field">
-          <span class="range-head"><span>卡片留白</span><strong>{{ typography.padding }}px</strong></span>
-          <input v-model.number="typography.padding" type="range" min="20" max="120" step="2" />
-        </label>
 
         <label class="toggle-row standalone">
           <input v-model="shadow.enabled" type="checkbox" />
@@ -2326,6 +2210,104 @@ async function downloadAllPages() {
 
       <template v-else>
         <section class="section-block">
+          <h2>内容基础</h2>
+          <label class="field">
+            <span>图标</span>
+            <input v-model="cardData.icon" type="text" maxlength="4" />
+            <div class="chips tiny">
+              <button v-for="icon in iconQuickPick" :key="icon" type="button" class="chip" @click="cardData.icon = icon">
+                {{ icon }}
+              </button>
+            </div>
+          </label>
+
+          <label class="field">
+            <span>页眉左（支持 Markdown）</span>
+            <input v-model="cardData.headerLeft" type="text" maxlength="200" />
+            <small class="field-hint">单字样式：<code>{{ INLINE_STYLE_MARK }}</code></small>
+          </label>
+
+          <label class="field">
+            <span>页眉右（支持 Markdown）</span>
+            <input v-model="cardData.headerRight" type="text" maxlength="120" />
+            <small class="field-hint">单字样式：<code>{{ INLINE_STYLE_MARK }}</code></small>
+          </label>
+
+          <div class="field">
+            <span>页眉分隔线</span>
+          </div>
+          <div class="grid-fields">
+            <label class="field">
+              <span>线型</span>
+              <select v-model="headerLineStyle.type">
+                <option value="solid">实线</option>
+                <option value="dashed">虚线</option>
+                <option value="dotted">点线</option>
+              </select>
+            </label>
+            <label class="field">
+              <span>线条粗细（px）</span>
+              <input v-model.number="headerLineStyle.thickness" type="number" min="1" max="12" />
+            </label>
+          </div>
+
+          <label class="field">
+            <span>署名</span>
+            <input v-model="cardData.author" type="text" maxlength="48" />
+          </label>
+
+          <label class="field">
+            <span>时间</span>
+            <input v-model="cardData.time" type="text" maxlength="40" />
+          </label>
+          <div class="inline-actions">
+            <button type="button" class="btn ghost mini" @click="setCurrentTime">填充当前时间</button>
+          </div>
+
+          <label class="field">
+            <span>水印</span>
+            <input v-model="cardData.watermark" type="text" maxlength="60" />
+          </label>
+
+          <div class="stat-box">
+            <span>{{ statsText }}</span>
+            <span>总页数自动计算，无需手动输入</span>
+          </div>
+
+          <div class="toggle-grid">
+            <label class="toggle-row"><input v-model="display.icon" type="checkbox" /> 显示图标</label>
+            <label class="toggle-row"><input v-model="display.headerLeft" type="checkbox" /> 显示页眉左</label>
+            <label class="toggle-row"><input v-model="display.headerRight" type="checkbox" /> 显示页眉右</label>
+            <label class="toggle-row"><input v-model="display.headerLine" type="checkbox" /> 显示页眉分隔线</label>
+            <label class="toggle-row"><input v-model="display.author" type="checkbox" /> 显示署名</label>
+            <label class="toggle-row"><input v-model="display.time" type="checkbox" /> 显示时间</label>
+            <label class="toggle-row"><input v-model="display.page" type="checkbox" /> 显示页码</label>
+            <label class="toggle-row"><input v-model="display.watermark" type="checkbox" /> 显示水印</label>
+          </div>
+        </section>
+
+        <section class="section-block">
+          <h2>字体选择（独立控制 + 字号）</h2>
+          <div class="font-tools">
+            <label class="field">
+              <span>上传字体（ttf/otf/woff/woff2）</span>
+              <input type="file" accept=".ttf,.otf,.woff,.woff2,font/ttf,font/otf,font/woff,font/woff2" multiple @change="onFontUpload" />
+            </label>
+          </div>
+          <div class="font-grid">
+            <div v-for="item in fontTargetOptions" :key="item.key" class="font-row">
+              <span class="font-row-label">{{ item.label }}</span>
+              <select v-model="fontFamilyConfig[item.key]">
+                <option v-for="font in getSelectableFontOptions(item.key)" :key="font.id" :value="font.id">
+                  {{ font.name }}
+                </option>
+              </select>
+              <input v-model.number="fontSizeConfig[item.key]" type="number" min="10" max="120" />
+            </div>
+          </div>
+        </section>
+
+        <section class="section-block">
           <h2>正文内容</h2>
           <div class="stat-box">
             <span>正文水平对齐</span>
@@ -2335,6 +2317,16 @@ async function downloadAllPages() {
             <button type="button" class="chip" :class="{ active: typography.align === 'left' }" @click="typography.align = 'left'">靠左</button>
             <button type="button" class="chip" :class="{ active: typography.align === 'center' }" @click="typography.align = 'center'">居中</button>
             <button type="button" class="chip" :class="{ active: typography.align === 'right' }" @click="typography.align = 'right'">靠右</button>
+          </div>
+          <div class="grid-fields inline-top-gap">
+            <label class="field">
+              <span class="range-head"><span>正文行距</span><strong>{{ typography.lineHeight.toFixed(2) }}</strong></span>
+              <input v-model.number="typography.lineHeight" type="range" min="1.1" max="2.5" step="0.05" />
+            </label>
+            <label class="field">
+              <span class="range-head"><span>卡片留白</span><strong>{{ typography.padding }}px</strong></span>
+              <input v-model.number="typography.padding" type="range" min="20" max="120" step="2" />
+            </label>
           </div>
           <div v-for="(block, index) in contentBlocks" :key="`content-block-${index}`">
             <label class="field">
