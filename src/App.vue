@@ -2101,15 +2101,15 @@ async function downloadAllPages() {
           <h2>封面信息</h2>
           <label class="field">
             <span>封面标题</span>
-            <textarea v-model="coverData.title" rows="2" maxlength="120"></textarea>
+            <textarea v-model="coverData.title" class="cover-input" rows="1" maxlength="120"></textarea>
           </label>
           <label class="field">
             <span>作者行</span>
-            <textarea v-model="coverData.author" rows="2" maxlength="80"></textarea>
+            <textarea v-model="coverData.author" class="cover-input" rows="1" maxlength="80"></textarea>
           </label>
           <label class="field">
             <span>副标题</span>
-            <textarea v-model="coverData.subtitle" rows="2" maxlength="120"></textarea>
+            <textarea v-model="coverData.subtitle" class="cover-input" rows="1" maxlength="120"></textarea>
           </label>
           <label class="field">
             <span>引用句</span>

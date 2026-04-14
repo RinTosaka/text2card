@@ -192,6 +192,10 @@ textarea {
     min-height: 120px;
 }
 
+.cover-input {
+    min-height: 68px;
+}
+
 input:focus,
 select:focus,
 textarea:focus {
