@@ -2511,7 +2511,7 @@ async function downloadAllPages() {
             class="cover-quote"
             :style="[coverTextStyle('quote'), coverSpacingStyle('quote')]"
           >
-            <p>{{ coverData.quote }}</p>
+            <p v-html="renderPlainBreaks(coverData.quote)"></p>
           </div>
         </div>
       </article>
