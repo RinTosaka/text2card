@@ -146,7 +146,7 @@ npm run preview
 格式：
 
 ```text
-{{文字|color=#ff4d4f;size=28;weight=700}}
+{{文字|color=#0a3273;size=28;weight=700}}
 ```
 
 支持键：

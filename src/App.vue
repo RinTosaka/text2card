@@ -6,7 +6,7 @@ import JSZip from 'jszip'
 import { marked } from 'marked'
 
 const MANUAL_BREAK_MARK = '[[page]]'
-const INLINE_STYLE_MARK = '{{文字|color=#ff4d4f;size=28;weight=700}}'
+const INLINE_STYLE_MARK = '{{文字|color=#0a3273;size=28;weight=700}}'
 const BLANK_LINE_TOKEN = 'T2C-BLANK-LINE'
 
 const sizePresets = [
@@ -1132,7 +1132,7 @@ onMounted(() => {
   }
 
   window.addEventListener('resize', handleWindowResize)
-  
+
   userTemplates.value = readUserTemplates()
 
   const defaultTemplate = cardTemplates.find((item) => item.id === 'clean')
@@ -1154,7 +1154,7 @@ onBeforeUnmount(() => {
   if (repaginateTimer) clearTimeout(repaginateTimer)
   if (templateActionTimer) clearTimeout(templateActionTimer)
   if (handleWindowResize) window.removeEventListener('resize', handleWindowResize)
-  
+
   if (resizeObserver) resizeObserver.disconnect()
   for (let i = 0; i < uploadedFontObjectUrls.value.length; i += 1) {
     URL.revokeObjectURL(uploadedFontObjectUrls.value[i])
@@ -2101,15 +2101,15 @@ async function downloadAllPages() {
           <h2>封面信息</h2>
           <label class="field">
             <span>封面标题</span>
-            <input v-model="coverData.title" type="text" maxlength="120" />
+            <textarea v-model="coverData.title" rows="2" maxlength="120"></textarea>
           </label>
           <label class="field">
             <span>作者行</span>
-            <input v-model="coverData.author" type="text" maxlength="80" />
+            <textarea v-model="coverData.author" rows="2" maxlength="80"></textarea>
           </label>
           <label class="field">
             <span>副标题</span>
-            <input v-model="coverData.subtitle" type="text" maxlength="120" />
+            <textarea v-model="coverData.subtitle" rows="2" maxlength="120"></textarea>
           </label>
           <label class="field">
             <span>引用句</span>
@@ -2453,23 +2453,20 @@ async function downloadAllPages() {
                       v-if="coverDisplay.title"
                       class="cover-title"
                       :style="[coverTextStyle('title'), coverSpacingStyle('title')]"
-                    >
-                      {{ coverData.title }}
-                    </div>
+                      v-html="renderPlainBreaks(coverData.title)"
+                    ></div>
                     <div
                       v-if="coverDisplay.author"
                       class="cover-author"
                       :style="[coverTextStyle('author'), coverSpacingStyle('author')]"
-                    >
-                      {{ coverData.author }}
-                    </div>
+                      v-html="renderPlainBreaks(coverData.author)"
+                    ></div>
                     <div
                       v-if="coverDisplay.subtitle"
                       class="cover-subtitle"
                       :style="[coverTextStyle('subtitle'), coverSpacingStyle('subtitle')]"
-                    >
-                      {{ coverData.subtitle }}
-                    </div>
+                      v-html="renderPlainBreaks(coverData.subtitle)"
+                    ></div>
 
                     <div
                       v-if="coverDisplay.quote"
@@ -2494,23 +2491,20 @@ async function downloadAllPages() {
             v-if="coverDisplay.title"
             class="cover-title"
             :style="[coverTextStyle('title'), coverSpacingStyle('title')]"
-          >
-            {{ coverData.title }}
-          </div>
+            v-html="renderPlainBreaks(coverData.title)"
+          ></div>
           <div
             v-if="coverDisplay.author"
             class="cover-author"
             :style="[coverTextStyle('author'), coverSpacingStyle('author')]"
-          >
-            {{ coverData.author }}
-          </div>
+            v-html="renderPlainBreaks(coverData.author)"
+          ></div>
           <div
             v-if="coverDisplay.subtitle"
             class="cover-subtitle"
             :style="[coverTextStyle('subtitle'), coverSpacingStyle('subtitle')]"
-          >
-            {{ coverData.subtitle }}
-          </div>
+            v-html="renderPlainBreaks(coverData.subtitle)"
+          ></div>
 
           <div
             v-if="coverDisplay.quote"

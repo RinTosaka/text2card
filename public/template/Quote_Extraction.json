@@ -14,11 +14,11 @@
     "display": {
       "icon": true,
       "headerLeft": true,
-      "headerRight": true,
+      "headerRight": false,
       "headerLine": true,
-      "author": true,
+      "author": false,
       "time": false,
-      "page": true,
+      "page": false,
       "watermark": false
     },
     "cardData": {
